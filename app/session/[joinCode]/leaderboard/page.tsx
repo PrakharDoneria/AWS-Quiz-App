@@ -1,5 +1,4 @@
-import { getSessionByJoinCode, getParticipants, getAnswersForParticipant, getQuestions } from "@/lib/quiz/db";
-import { calculateParticipantScore } from "@/lib/quiz/scoring";
+import { getSessionByJoinCode, getParticipants } from "@/lib/quiz/db";
 import { Trophy, Medal } from "lucide-react";
 import Link from "next/link";
 
@@ -16,21 +15,8 @@ export default async function LeaderboardPage({
   }
 
   const participants = await getParticipants(session.id);
-  const questions = await getQuestions(session.quizId);
-  
-  // Calculate scores
-  const participantScores = await Promise.all(
-    participants.map(async (p: any) => {
-      const answers = await getAnswersForParticipant(session.id, p.id);
-      return {
-        ...p,
-        score: calculateParticipantScore(answers as any, questions)
-      };
-    })
-  );
-
-  // Sort descending
-  participantScores.sort((a: any, b: any) => b.score - a.score);
+  // Sort descending by score
+  const sortedParticipants = [...participants].sort((a: any, b: any) => b.score - a.score);
 
   return (
     <main className="container flex flex-col items-center justify-center gap-4 mt-8">
@@ -44,11 +30,11 @@ export default async function LeaderboardPage({
           Session Code: {joinCode}
         </p>
 
-        {participantScores.length === 0 ? (
+        {sortedParticipants.length === 0 ? (
           <p className="text-gray-400 py-8">No players have joined this session yet.</p>
         ) : (
           <ul className="flex flex-col gap-4 mb-8">
-            {participantScores.map((p: any, index: number) => {
+            {sortedParticipants.map((p: any, index: number) => {
               let medalColor = "text-transparent";
               if (index === 0) medalColor = "text-yellow-400";
               else if (index === 1) medalColor = "text-gray-300";
