@@ -5,7 +5,7 @@ import { DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
 // In local development, the AWS SDK will use ~/.aws/credentials (e.g. from AWS CLI).
 // In production on AWS Amplify, it will automatically use the IAM role attached to the SSR function.
 const client = new DynamoDBClient({
-  region: process.env.AWS_REGION || "ap-south-1",
+  region: process.env.REGION || "ap-south-1",
 });
 
 const ddbDocClient = DynamoDBDocumentClient.from(client, {

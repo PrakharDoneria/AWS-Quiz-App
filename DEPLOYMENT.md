@@ -21,7 +21,7 @@ This guide explains how to deploy the AWS Quiz App to **AWS Amplify Hosting** an
 4. Select the repository and branch.
 5. In the **Build settings** step, amplify will auto-detect Next.js.
 6. Under **Advanced settings**, add your Environment Variables:
-   - `AWS_REGION` = `ap-south-1` (or your chosen region)
+   - `REGION` = `ap-south-1` (or your chosen region)
    - `DYNAMODB_TABLE_NAME` = `quiz-app`
 7. Click **Save and deploy**.
 
@@ -95,7 +95,7 @@ To run this application locally, **do not put AWS credentials in `.env`**.
 2. The AWS SDK v3 automatically picks up your local `~/.aws/credentials`.
 3. Create a `.env.local` file:
    ```env
-   AWS_REGION=ap-south-1
+   REGION=ap-south-1
    DYNAMODB_TABLE_NAME=quiz-app
    ```
 4. Run the development server:
