@@ -48,7 +48,8 @@ export async function createQuestion(
   options: {id: string, text: string}[], 
   correctOptionId: string,
   difficulty: 'EASY' | 'MEDIUM' | 'HARD' = 'MEDIUM',
-  points: number = 10
+  points: number = 10,
+  timeLimit: number = 30
 ): Promise<Question> {
   const question: Question = {
     id: uuidv4(),
@@ -58,6 +59,7 @@ export async function createQuestion(
     correctOptionId,
     difficulty,
     points,
+    timeLimit,
   };
 
   await ddbDocClient.send(new PutCommand({
@@ -110,8 +112,57 @@ export async function getAllQuizzes(): Promise<Quiz[]> {
 }
 
 export async function deleteQuiz(quizId: string) {
-  // To keep it simple, we just delete the quiz metadata.
-  // In production, we'd query and delete all questions too.
+  // 1. Get quiz metadata to find quizCode
+  const quiz = await getQuiz(quizId);
+  if (!quiz) return;
+
+  // 2. Query and delete all questions
+  const questions = await getQuestions(quizId);
+  for (const q of questions) {
+    await ddbDocClient.send(new DeleteCommand({
+      TableName,
+      Key: { PK: quizPK(quizId), SK: `QUESTION#${q.id}` }
+    }));
+  }
+
+  // 3. Scan for all sessions belonging to this quiz
+  const sessionsRes = await ddbDocClient.send(new ScanCommand({
+    TableName,
+    FilterExpression: "SK = :sk AND quizId = :quizId",
+    ExpressionAttributeValues: { ":sk": "METADATA", ":quizId": quizId }
+  }));
+  const sessions = sessionsRes.Items || [];
+
+  for (const s of sessions) {
+    // 3a. Delete the JOINCODE mapping
+    await ddbDocClient.send(new DeleteCommand({
+      TableName,
+      Key: { PK: `JOINCODE#${s.joinCode}`, SK: "METADATA" }
+    }));
+
+    // 3b. Query and delete EVERYTHING under the Session (Metadata, Participants, Answers)
+    const sessionItemsRes = await ddbDocClient.send(new QueryCommand({
+      TableName,
+      KeyConditionExpression: "PK = :pk",
+      ExpressionAttributeValues: { ":pk": sessionPK(s.id) }
+    }));
+    const sessionItems = sessionItemsRes.Items || [];
+
+    for (const item of sessionItems) {
+      await ddbDocClient.send(new DeleteCommand({
+        TableName,
+        Key: { PK: item.PK, SK: item.SK }
+      }));
+    }
+  }
+
+  // 4. Delete the QUIZCODE mapping
+  await ddbDocClient.send(new DeleteCommand({
+    TableName,
+    Key: { PK: `QUIZCODE#${quiz.quizCode}`, SK: "METADATA" }
+  }));
+
+  // 5. Delete Quiz Metadata
   await ddbDocClient.send(new DeleteCommand({
     TableName,
     Key: {

@@ -1,0 +1,114 @@
+/* Neobrutalism Cards */
+.glass-panel, .neo-card {
+  background: var(--card-bg);
+  /* Stark, solid 2px borders, no blur */
+  border: 3px solid #324054;
+  border-radius: 4px;
+  padding: 2.5rem;
+  /* Hard offset shadow */
+  box-shadow: 8px 8px 0px 0px rgba(0, 0, 0, 0.5);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.glass-panel:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 10px 10px 0px 0px rgba(0, 0, 0, 0.6);
+  border-color: #4b607c;
+}
+
+/* Premium Neobrutalism Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background-color: var(--primary);
+  color: #000000;
+  border: 2px solid #000000;
+  padding: 0.85rem 1.75rem;
+  font-size: 1.1rem;
+  font-weight: 800;
+  border-radius: 0px; /* Sharp corners */
+  cursor: pointer;
+  /* Stark shadow */
+  box-shadow: 4px 4px 0px 0px #000000;
+  transition: all 0.1s ease;
+  text-decoration: none;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.btn:hover:not(:disabled) {
+  background-color: var(--primary-hover);
+  transform: translate(-1px, -1px);
+  box-shadow: 5px 5px 0px 0px #000000;
+}
+
+.btn:active:not(:disabled) {
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0px 0px #000000;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none !important;
+  box-shadow: 4px 4px 0px 0px #000000 !important;
+}
+
+.btn-secondary {
+  background-color: #324054;
+  color: var(--foreground);
+  border: 2px solid #000000;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background-color: #4b607c;
+}
+
+/* Inputs */
+.input {
+  width: 100%;
+  padding: 1rem 1.25rem;
+  background: #10141a;
+  border: 2px solid #5a6b82;
+  border-radius: 0px; /* Sharp */
+  color: var(--foreground);
+  font-size: 1.1rem;
+  font-family: inherit;
+  font-weight: 700;
+  transition: all 0.15s ease;
+  box-shadow: inset 2px 2px 5px rgba(0,0,0,0.3);
+}
+
+.input::placeholder {
+  color: #64748b;
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--primary);
+  background: #171b22;
+  /* Thick highlight border on focus */
+  box-shadow: 4px 4px 0px 0px var(--primary);
+}
+
+/* Special Elements */
+.badge {
+  background-color: var(--secondary);
+  border: 2px solid #000000;
+  color: #ffffff;
+  border-radius: 0px;
+  padding: 0.35rem 0.85rem;
+  font-weight: 800;
+  box-shadow: 2px 2px 0px 0px #000000;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.score-box {
+  background-color: #212836;
+  border: 3px solid var(--tertiary);
+  border-radius: 0px;
+  box-shadow: 6px 6px 0px 0px var(--tertiary);
+}

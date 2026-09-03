@@ -17,6 +17,7 @@ export default function QuizBuilderClient() {
       text: "",
       difficulty: "MEDIUM",
       points: 10,
+      timeLimit: 30,
       correctOptionId: "opt-1",
       options: [
         { id: "opt-1", text: "" },
@@ -37,6 +38,7 @@ export default function QuizBuilderClient() {
         text: "",
         difficulty: "MEDIUM",
         points: 10,
+        timeLimit: 30,
         correctOptionId: opt1,
         options: [
           { id: opt1, text: "" },
@@ -181,6 +183,17 @@ export default function QuizBuilderClient() {
                   onChange={e => updateQuestion(q.id, 'points', parseInt(e.target.value) || 0)}
                   className="input bg-black/40"
                   min="0"
+                />
+              </div>
+              <div className="flex-1">
+                <label className="text-sm text-gray-400 mb-1 block">Time Limit (s)</label>
+                <input 
+                  type="number"
+                  value={q.timeLimit}
+                  onChange={e => updateQuestion(q.id, 'timeLimit', parseInt(e.target.value) || 30)}
+                  className="input bg-black/40"
+                  min="5"
+                  max="300"
                 />
               </div>
             </div>

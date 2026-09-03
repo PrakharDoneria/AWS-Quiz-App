@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Question } from "@/types/quiz";
 import { submitAnswerAction, finishQuizAction } from "./actions";
 import { useRouter } from "next/navigation";
@@ -23,17 +23,27 @@ export default function PlayClient({
 }) {
   const router = useRouter();
   
-  // Find the first question that hasn't been answered yet
-  const initialIndex = questions.findIndex(
-    q => !existingAnswers.some(a => a.questionId === q.id)
-  );
-  
-  const [currentIndex, setCurrentIndex] = useState(initialIndex === -1 ? questions.length : initialIndex);
+  // Track which questions are answered
+  const [answeredMap, setAnsweredMap] = useState<Record<string, boolean>>(() => {
+    const map: Record<string, boolean> = {};
+    existingAnswers.forEach(a => {
+      map[a.questionId] = true;
+    });
+    return map;
+  });
+
+  const initialIndex = questions.findIndex(q => !answeredMap[q.id]);
+  const [currentIndex, setCurrentIndex] = useState(initialIndex === -1 ? 0 : initialIndex);
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [feedback, setFeedback] = useState<boolean | null>(null); // true = correct, false = incorrect
-  const [timeLeft, setTimeLeft] = useState(30);
-  const [hasStarted, setHasStarted] = useState(false); // Used to trigger full screen
+  
+  // Array of time left per question
+  const [timers, setTimers] = useState<number[]>(() => {
+    return questions.map(q => q.timeLimit || 30);
+  });
+
+  const [hasStarted, setHasStarted] = useState(false);
+  const [isFinished, setIsFinished] = useState(initialIndex === -1 && existingAnswers.length === questions.length);
 
   const enterFullScreen = async () => {
     try {
@@ -43,43 +53,86 @@ export default function PlayClient({
       setHasStarted(true);
     } catch (err) {
       console.error("Error attempting to enable full-screen mode:", err);
-      // Still start if it fails, but ideally they should be in full screen
       setHasStarted(true);
     }
   };
 
-  const handleSubmit = useCallback(async (autoOption: string | null = null) => {
+  const handleFinishQuiz = useCallback(async () => {
+    setIsFinished(true);
+    if (document.fullscreenElement) {
+      document.exitFullscreen().catch(err => console.error(err));
+    }
+    await finishQuizAction(sessionId, participantId, quizId);
+    router.push(`/session/${joinCode}/results?participantId=${participantId}`);
+  }, [sessionId, participantId, quizId, joinCode, router]);
+
+  const handleSubmit = useCallback(async (autoOption: string | null = null, forceIndex: number = currentIndex) => {
+    const q = questions[forceIndex];
+    if (answeredMap[q.id] || isSubmitting) return;
+
     const optionToSubmit = autoOption || selectedOption;
-    if ((!optionToSubmit && !autoOption) || isSubmitting) return;
+    if (!optionToSubmit && !autoOption) return;
+    
     setIsSubmitting(true);
     
     try {
-      // If time ran out and no option selected, we submit a dummy incorrect option (or the first option which will likely be wrong or just recorded as incorrect if not matching)
-      // Actually, passing "TIMEOUT" will result in incorrect on server side since it won't match correctOptionId
-      const res = await submitAnswerAction(sessionId, participantId, questions[currentIndex].id, optionToSubmit || "TIMEOUT");
-      setFeedback(res.isCorrect);
+      await submitAnswerAction(sessionId, participantId, q.id, optionToSubmit || "TIMEOUT");
       
-      // Wait a moment so they can see if it was correct
-      setTimeout(() => {
-        setFeedback(null);
-        setSelectedOption(null);
-        setIsSubmitting(false);
-        setTimeLeft(30);
-        setCurrentIndex(prev => prev + 1);
-      }, 1500);
+      setAnsweredMap(prev => ({ ...prev, [q.id]: true }));
+      setSelectedOption(null);
+      setIsSubmitting(false);
+      
+      // If we auto-submitted due to timeout on the active question, find next unanswered
+      if (forceIndex === currentIndex) {
+        const nextIndex = questions.findIndex((qItem, idx) => idx > forceIndex && !answeredMap[qItem.id]);
+        if (nextIndex !== -1) {
+          setCurrentIndex(nextIndex);
+        } else {
+          // Look from beginning
+          const anyNextIndex = questions.findIndex(qItem => !answeredMap[qItem.id] && qItem.id !== q.id);
+          if (anyNextIndex !== -1) {
+            setCurrentIndex(anyNextIndex);
+          }
+        }
+      }
     } catch (e) {
       console.error(e);
       setIsSubmitting(false);
     }
-  }, [selectedOption, isSubmitting, sessionId, participantId, questions, currentIndex]);
+  }, [selectedOption, isSubmitting, sessionId, participantId, questions, currentIndex, answeredMap]);
+
+  // Timer logic for ACTIVE question
+  useEffect(() => {
+    if (!hasStarted || isFinished || isSubmitting) return;
+    const currentQId = questions[currentIndex].id;
+    if (answeredMap[currentQId]) return; // Stop ticking if already answered
+
+    const timer = setInterval(() => {
+      setTimers((prev) => {
+        const newTimers = [...prev];
+        const timeLeft = newTimers[currentIndex];
+        
+        if (timeLeft <= 1) {
+          clearInterval(timer);
+          newTimers[currentIndex] = 0;
+          handleSubmit("TIMEOUT", currentIndex);
+          return newTimers;
+        }
+        
+        newTimers[currentIndex] = timeLeft - 1;
+        return newTimers;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [hasStarted, isFinished, isSubmitting, currentIndex, answeredMap, questions, handleSubmit]);
 
   // Anti-cheat visibility & fullscreen listener
   useEffect(() => {
-    if (!hasStarted) return;
+    if (!hasStarted || isFinished) return;
     
     const handleVisibilityChange = async () => {
-      if (document.hidden && currentIndex < questions.length) {
-        // Instant terminate on tab switch
+      if (document.hidden) {
         finishQuizAction(sessionId, participantId, quizId).then(() => {
           router.push(`/session/${joinCode}/results?participantId=${participantId}&cheated=true&reason=tab-switch`);
         });
@@ -87,8 +140,7 @@ export default function PlayClient({
     };
 
     const handleFullscreenChange = async () => {
-      if (!document.fullscreenElement && currentIndex < questions.length) {
-        // Instant terminate on exiting fullscreen
+      if (!document.fullscreenElement) {
         finishQuizAction(sessionId, participantId, quizId).then(() => {
           router.push(`/session/${joinCode}/results?participantId=${participantId}&cheated=true&reason=exit-fullscreen`);
         });
@@ -102,7 +154,7 @@ export default function PlayClient({
       document.removeEventListener("visibilitychange", handleVisibilityChange);
       document.removeEventListener("fullscreenchange", handleFullscreenChange);
     };
-  }, [currentIndex, questions.length, sessionId, joinCode, participantId, router, hasStarted, quizId]);
+  }, [hasStarted, isFinished, sessionId, joinCode, participantId, router, quizId]);
 
   // Anti-cheat localstorage check
   useEffect(() => {
@@ -115,52 +167,21 @@ export default function PlayClient({
     }
   }, [quizId, router]);
 
-  // Timer logic
-  useEffect(() => {
-    if (!hasStarted || currentIndex >= questions.length || feedback !== null || isSubmitting) return;
-
-    const timer = setInterval(() => {
-      setTimeLeft((prev) => {
-        if (prev <= 1) {
-          clearInterval(timer);
-          handleSubmit("TIMEOUT");
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, [currentIndex, questions.length, feedback, isSubmitting, handleSubmit]);
-
-  if (currentIndex >= questions.length) {
-    // Attempt to exit fullscreen when done
-    if (document.fullscreenElement) {
-      document.exitFullscreen().catch(err => console.error(err));
-    }
+  if (isFinished) {
     return (
       <div className="glass-panel text-center">
-        <h2>You've completed all questions!</h2>
-        <p className="mb-6">Waiting for others or finish the quiz now.</p>
-        <button 
-          className="btn w-full"
-          onClick={async () => {
-            await finishQuizAction(sessionId, participantId, quizId);
-            router.push(`/session/${joinCode}/results?participantId=${participantId}`);
-          }}
-        >
-          Finish & View Results
-        </button>
+        <h2>Quiz Completed!</h2>
+        <p className="mb-6">Redirecting to results...</p>
       </div>
     );
   }
 
   if (!hasStarted) {
     return (
-      <div className="glass-panel text-center w-full max-w-md">
+      <div className="glass-panel text-center w-full max-w-md mx-auto">
         <h2 className="mb-4">Ready to Begin?</h2>
-        <p className="mb-6 text-sm">
-          This quiz requires <strong>Full Screen mode</strong> and active attention. 
+        <p className="mb-6 text-sm text-gray-400">
+          This quiz requires <strong>Full Screen mode</strong>. 
           If you switch tabs or exit full screen, the quiz will instantly terminate.
         </p>
         <button className="btn w-full" onClick={enterFullScreen}>
@@ -171,56 +192,111 @@ export default function PlayClient({
   }
 
   const question = questions[currentIndex];
+  const isAnswered = answeredMap[question.id];
+  const timeLeft = timers[currentIndex];
 
-  // handleSubmit is defined above with useCallback
+  const allAnswered = questions.every(q => answeredMap[q.id] || timers[questions.findIndex(x => x.id === q.id)] === 0);
 
   return (
-    <div 
-      className="glass-panel w-full max-w-2xl text-center relative"
-      onContextMenu={(e) => e.preventDefault()}
-      onCopy={(e) => e.preventDefault()}
-    >
-      <div className="flex justify-between items-center mb-2">
-        <div className="text-sm text-gray-400">
-          Question {currentIndex + 1} of {questions.length}
-        </div>
-        <div className={`text-sm font-bold px-3 py-1 rounded-full ${timeLeft <= 10 ? 'bg-red-500/20 text-red-500 animate-pulse' : 'bg-white/10 text-gray-400'}`}>
-          {timeLeft}s
-        </div>
-      </div>
-      <h2 className="mb-6 text-2xl">{question.text}</h2>
-      
-      <div className="flex flex-col gap-3">
-        {question.options.map((opt) => {
-          let bgClass = "bg-white/5 border-white/10 hover:bg-white/10";
-          if (selectedOption === opt.id) {
-            bgClass = "bg-primary/20 border-primary";
-            if (feedback === true) bgClass = "bg-success/20 border-success text-success";
-            if (feedback === false) bgClass = "bg-danger/20 border-danger text-danger";
-          }
+    <div className="w-full max-w-5xl mx-auto flex flex-col md:flex-row gap-6 mt-8">
+      {/* LEFT: Sidebar / Navigation */}
+      <div className="w-full md:w-64 flex flex-col gap-4">
+        <div className="glass-panel p-4">
+          <h3 className="text-lg mb-4 text-center">Questions</h3>
+          <div className="grid grid-cols-4 gap-2">
+            {questions.map((q, idx) => {
+              const isQAnswered = answeredMap[q.id];
+              const isActive = idx === currentIndex;
+              let bg = "bg-gray-800 text-gray-400 border-gray-700";
+              
+              if (isActive) {
+                bg = "bg-tertiary text-white border-tertiary shadow-[2px_2px_0px_0px_var(--tertiary)]";
+              } else if (isQAnswered) {
+                bg = "bg-white/10 text-gray-300 border-white/20";
+              }
+              
+              return (
+                <button
+                  key={q.id}
+                  onClick={() => {
+                    setSelectedOption(null);
+                    setCurrentIndex(idx);
+                  }}
+                  className={`flex items-center justify-center h-12 w-full font-bold border-2 transition-all ${bg}`}
+                >
+                  {idx + 1}
+                </button>
+              );
+            })}
+          </div>
           
-          return (
-            <button
-              key={opt.id}
-              disabled={isSubmitting || feedback !== null}
-              onClick={() => setSelectedOption(opt.id)}
-              className={`p-4 rounded-lg border text-left flex items-center justify-between transition-all ${bgClass}`}
-            >
-              <span>{opt.text}</span>
-              {selectedOption === opt.id && feedback === true && <CheckCircle size={20} className="text-success" />}
-              {selectedOption === opt.id && feedback === false && <XCircle size={20} className="text-danger" />}
-            </button>
-          );
-        })}
+          <button 
+            className="btn btn-secondary w-full mt-6"
+            onClick={handleFinishQuiz}
+          >
+            {allAnswered ? "Finish Quiz" : "Finish Early"}
+          </button>
+        </div>
       </div>
-      
-      <button 
-        className="btn mt-8 w-full"
-        disabled={!selectedOption || isSubmitting || feedback !== null}
-        onClick={() => handleSubmit()}
+
+      {/* RIGHT: Active Question */}
+      <div 
+        className="glass-panel flex-1 relative"
+        onContextMenu={(e) => e.preventDefault()}
+        onCopy={(e) => e.preventDefault()}
       >
-        Submit Answer
-      </button>
+        <div className="flex justify-between items-center mb-6">
+          <div className="text-sm text-gray-400 font-bold uppercase tracking-wider">
+            Question {currentIndex + 1}
+          </div>
+          <div className={`text-sm font-bold px-4 py-2 border-2 ${
+            timeLeft <= 10 && !isAnswered ? 'border-danger text-danger' : 'border-white/20 text-gray-300'
+          }`}>
+            {isAnswered ? "SUBMITTED" : `${timeLeft}s REMAINING`}
+          </div>
+        </div>
+        
+        <h2 className="mb-8 text-2xl">{question.text}</h2>
+        
+        <div className="flex flex-col gap-4">
+          {question.options.map((opt) => {
+            const isSelected = selectedOption === opt.id;
+            // Since we don't know the exact option they submitted previously in this context,
+            // we just show options. If answered, we don't highlight their past choice unless we fetch it.
+            // For simplicity, we just disable them.
+            return (
+              <button
+                key={opt.id}
+                disabled={isAnswered || isSubmitting}
+                onClick={() => setSelectedOption(opt.id)}
+                className={`p-4 border-2 text-left flex items-center justify-between transition-all ${
+                  isSelected 
+                    ? "bg-primary/20 border-primary text-primary" 
+                    : "bg-black/40 border-white/10 hover:border-white/30"
+                } ${isAnswered ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+              >
+                <span className="font-medium text-lg">{opt.text}</span>
+              </button>
+            );
+          })}
+        </div>
+        
+        {!isAnswered && (
+          <button 
+            className="btn mt-8 w-full"
+            disabled={!selectedOption || isSubmitting}
+            onClick={() => handleSubmit()}
+          >
+            Submit Answer
+          </button>
+        )}
+        
+        {isAnswered && (
+          <div className="mt-8 text-center text-gray-400 font-bold">
+            Answer submitted. Select another question from the sidebar.
+          </div>
+        )}
+      </div>
     </div>
   );
 }

@@ -17,4 +17,5 @@ export interface Question {
   correctOptionId: string;
   difficulty?: 'EASY' | 'MEDIUM' | 'HARD';
   points?: number;
+  timeLimit?: number;
 }

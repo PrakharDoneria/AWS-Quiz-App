@@ -1,6 +1,6 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { Settings, Plus, Trash2, Trophy } from "lucide-react";
+import { Settings, Plus, Trash2, Trophy, Hammer } from "lucide-react";
 import Link from "next/link";
 import { getAllQuizzes } from "@/lib/quiz/db";
 import { deleteQuizAction } from "@/app/admin/manage/actions";
@@ -23,9 +23,14 @@ export default async function AdminManage() {
             <Settings size={32} className="text-primary" />
             <h2 className="mb-0">Manage Quizzes</h2>
           </div>
-          <Link href="/admin/dashboard" className="btn btn-secondary">
-            <Plus size={18} /> Create New Quiz
-          </Link>
+          <div className="flex gap-2">
+            <Link href="/admin/dashboard" className="btn btn-secondary text-sm px-4 py-2">
+              <Hammer size={18} /> Quiz Builder
+            </Link>
+            <Link href="/admin/dashboard" className="btn text-sm px-4 py-2">
+              <Plus size={18} /> New Quiz
+            </Link>
+          </div>
         </div>
 
         <div className="flex flex-col gap-4">
@@ -47,10 +52,13 @@ export default async function AdminManage() {
                   </h3>
                   <p className="text-sm text-gray-400">{quiz.description}</p>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-4">
+                  <Link href={`/admin/manage/${quiz.id}/leaderboard`} className="p-2 text-gray-400 hover:text-primary transition-colors" title="View Leaderboard">
+                    <Trophy size={20} />
+                  </Link>
                   <form action={deleteQuizAction}>
                     <input type="hidden" name="quizId" value={quiz.id} />
-                    <button type="submit" className="p-2 text-gray-400 hover:text-danger hover:bg-white/5 rounded-md transition-colors" title="Delete Quiz">
+                    <button type="submit" className="p-2 text-gray-400 hover:text-danger transition-colors" title="Delete Quiz">
                       <Trash2 size={20} />
                     </button>
                   </form>
