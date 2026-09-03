@@ -50,10 +50,11 @@ AWS Amplify Hosting for Next.js does not automatically inject execution role cre
                 "dynamodb:PutItem",
                 "dynamodb:GetItem",
                 "dynamodb:UpdateItem",
+                "dynamodb:DeleteItem",
                 "dynamodb:Query",
                 "dynamodb:Scan"
             ],
-            "Resource": "arn:aws:dynamodb:REGION:ACCOUNT_ID:table/quiz-app"
+            "Resource": "arn:aws:dynamodb:ap-south-1:056285329963:table/quiz-app"
         }
     ]
 }
