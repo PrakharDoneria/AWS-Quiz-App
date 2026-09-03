@@ -15,13 +15,22 @@ interface LobbyClientProps {
 export default function LobbyClient({ session, participants, participantId, startQuizAction }: LobbyClientProps) {
   const router = useRouter();
 
-  // Polling for real-time updates
+  // Polling for real-time updates and checking localstorage anti-cheat
   useEffect(() => {
+    try {
+      if (localStorage.getItem(`attempted_quiz_${session.quizId}`)) {
+        router.push(`/?error=${encodeURIComponent("You have already attempted this quiz and cannot rejoin.")}`);
+        return;
+      }
+    } catch (e) {
+      console.error(e);
+    }
+
     const interval = setInterval(() => {
       router.refresh();
     }, 2000); // Poll every 2 seconds
     return () => clearInterval(interval);
-  }, [router]);
+  }, [router, session.quizId]);
 
   if (session.status === 'ACTIVE') {
     // If we're just polling and the session goes active, this client-side redirect helps catch it instantly

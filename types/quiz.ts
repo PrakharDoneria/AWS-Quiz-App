@@ -1,5 +1,6 @@
 export interface Quiz {
   id: string; // The UUID or ID of the quiz
+  quizCode: string;
   title: string;
   description?: string;
   createdAt: string;

@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { Settings, Plus, Trash2, Trophy } from "lucide-react";
 import Link from "next/link";
 import { getAllQuizzes } from "@/lib/quiz/db";
-import { deleteQuizAction } from "./actions";
+import { deleteQuizAction } from "@/app/admin/manage/actions";
 
 export default async function AdminManage() {
   const cookieStore = await cookies();
@@ -37,7 +37,14 @@ export default async function AdminManage() {
             quizzes.map(quiz => (
               <div key={quiz.id} className="glass-panel flex items-center justify-between py-4 px-6">
                 <div>
-                  <h3 className="text-xl mb-1">{quiz.title}</h3>
+                  <h3 className="text-xl mb-1 flex items-center gap-3">
+                    {quiz.title} 
+                    {quiz.quizCode && (
+                      <span className="text-xs bg-primary/20 text-primary px-2 py-1 rounded-md border border-primary/30 tracking-widest font-mono">
+                        CODE: {quiz.quizCode}
+                      </span>
+                    )}
+                  </h3>
                   <p className="text-sm text-gray-400">{quiz.description}</p>
                 </div>
                 <div className="flex items-center gap-2">

@@ -14,6 +14,7 @@ const sessionPK = (sessionId: string) => `SESSION#${sessionId}`;
 export async function createQuiz(title: string, description: string = ""): Promise<Quiz> {
   const quiz: Quiz = {
     id: uuidv4(),
+    quizCode: Math.floor(1000 + Math.random() * 9000).toString(),
     title,
     description,
     createdAt: new Date().toISOString(),
@@ -25,6 +26,16 @@ export async function createQuiz(title: string, description: string = ""): Promi
       PK: quizPK(quiz.id),
       SK: "METADATA",
       ...quiz,
+    }
+  }));
+
+  // Mapping item: PK = QUIZCODE#<code>, SK = METADATA
+  await ddbDocClient.send(new PutCommand({
+    TableName,
+    Item: {
+      PK: `QUIZCODE#${quiz.quizCode}`,
+      SK: "METADATA",
+      quizId: quiz.id
     }
   }));
 
@@ -70,6 +81,20 @@ export async function getQuiz(quizId: string): Promise<Quiz | null> {
     }
   }));
   return response.Item ? (response.Item as Quiz) : null;
+}
+
+export async function getQuizByCode(quizCode: string): Promise<Quiz | null> {
+  const codeItem = await ddbDocClient.send(new GetCommand({
+    TableName,
+    Key: {
+      PK: `QUIZCODE#${quizCode}`,
+      SK: "METADATA",
+    }
+  }));
+
+  if (!codeItem.Item) return null;
+
+  return getQuiz(codeItem.Item.quizId);
 }
 
 export async function getAllQuizzes(): Promise<Quiz[]> {

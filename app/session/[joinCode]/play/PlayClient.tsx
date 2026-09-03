@@ -8,12 +8,14 @@ import { CheckCircle, XCircle } from "lucide-react";
 
 export default function PlayClient({
   sessionId,
+  quizId,
   joinCode,
   participantId,
   questions,
   existingAnswers,
 }: {
   sessionId: string;
+  quizId: string;
   joinCode: string;
   participantId: string;
   questions: Question[];
@@ -78,7 +80,7 @@ export default function PlayClient({
     const handleVisibilityChange = async () => {
       if (document.hidden && currentIndex < questions.length) {
         // Instant terminate on tab switch
-        finishQuizAction(sessionId).then(() => {
+        finishQuizAction(sessionId, participantId, quizId).then(() => {
           router.push(`/session/${joinCode}/results?participantId=${participantId}&cheated=true&reason=tab-switch`);
         });
       }
@@ -87,7 +89,7 @@ export default function PlayClient({
     const handleFullscreenChange = async () => {
       if (!document.fullscreenElement && currentIndex < questions.length) {
         // Instant terminate on exiting fullscreen
-        finishQuizAction(sessionId).then(() => {
+        finishQuizAction(sessionId, participantId, quizId).then(() => {
           router.push(`/session/${joinCode}/results?participantId=${participantId}&cheated=true&reason=exit-fullscreen`);
         });
       }
@@ -100,7 +102,18 @@ export default function PlayClient({
       document.removeEventListener("visibilitychange", handleVisibilityChange);
       document.removeEventListener("fullscreenchange", handleFullscreenChange);
     };
-  }, [currentIndex, questions.length, sessionId, joinCode, participantId, router, hasStarted]);
+  }, [currentIndex, questions.length, sessionId, joinCode, participantId, router, hasStarted, quizId]);
+
+  // Anti-cheat localstorage check
+  useEffect(() => {
+    try {
+      if (localStorage.getItem(`attempted_quiz_${quizId}`)) {
+        router.push(`/?error=${encodeURIComponent("You have already attempted this quiz and cannot rejoin.")}`);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  }, [quizId, router]);
 
   // Timer logic
   useEffect(() => {
@@ -132,7 +145,7 @@ export default function PlayClient({
         <button 
           className="btn w-full"
           onClick={async () => {
-            await finishQuizAction(sessionId);
+            await finishQuizAction(sessionId, participantId, quizId);
             router.push(`/session/${joinCode}/results?participantId=${participantId}`);
           }}
         >

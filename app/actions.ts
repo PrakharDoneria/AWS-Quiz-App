@@ -1,10 +1,10 @@
 "use server";
 
-import { createSession, getSessionByJoinCode, addParticipant, getParticipants } from "@/lib/quiz/db";
+import { createSession, getSessionByJoinCode, addParticipant, getParticipants, getQuizByCode } from "@/lib/quiz/db";
 import { redirect } from "next/navigation";
 
 export async function playQuizAction(formData: FormData) {
-  const quizId = formData.get("quizId")?.toString();
+  const quizCode = formData.get("quizCode")?.toString().toUpperCase();
   const name = formData.get("name")?.toString();
   const mode = formData.get("mode")?.toString() as 'SOLO' | 'TEAM';
 
@@ -13,11 +13,16 @@ export async function playQuizAction(formData: FormData) {
   let sessionJoinCode;
 
   try {
-    if (!quizId || !name || !mode) {
+    if (!quizCode || !name || !mode) {
       throw new Error("Missing required fields");
     }
 
-    const session = await createSession(quizId, mode);
+    const quiz = await getQuizByCode(quizCode);
+    if (!quiz) {
+      throw new Error("Invalid Quiz Code");
+    }
+
+    const session = await createSession(quiz.id, mode);
     sessionJoinCode = session.joinCode;
 
     const participant = await addParticipant(session.id, name);

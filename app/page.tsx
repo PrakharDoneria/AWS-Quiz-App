@@ -20,55 +20,46 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ e
         </div>
       )}
 
-      {/* Available Quizzes Section */}
-      <div className="w-full mb-12">
-        <h2 className="text-2xl mb-6 text-left">Available Quizzes</h2>
-        {quizzes.length === 0 ? (
-          <div className="glass-panel text-center py-12 text-gray-400">
-            No quizzes available right now.
-          </div>
-        ) : (
-          <div className="flex flex-col gap-4">
-            {quizzes.map(quiz => (
-              <div key={quiz.id} className="glass-panel flex flex-col items-start p-6 w-full shadow-md text-left">
-                <h3 className="text-xl font-bold mb-1">{quiz.title}</h3>
-                <p className="text-gray-400 text-sm mb-6">{quiz.description}</p>
-                <form action={playQuizAction} className="flex gap-4 w-full">
-                  <input type="hidden" name="quizId" value={quiz.id} />
-                  <input 
-                    name="name" 
-                    type="text" 
-                    placeholder="Your Name" 
-                    className="input flex-1" 
-                    required 
-                    maxLength={20}
-                  />
-                  <div className="flex gap-2">
-                    <button type="submit" name="mode" value="SOLO" className="btn btn-secondary border border-white/20 whitespace-nowrap px-4 py-2 text-sm">
-                      Play Solo
-                    </button>
-                    <button type="submit" name="mode" value="TEAM" className="btn whitespace-nowrap px-4 py-2 text-sm">
-                      Play Team
-                    </button>
-                  </div>
-                </form>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      <div className="w-full border-t border-white/10 pt-12">
-        <div className="glass-panel flex flex-col items-center gap-6 py-10 px-8 w-full shadow-lg">
+      <div className="w-full flex flex-col md:flex-row gap-6 mt-4">
+        {/* Make New Team Section */}
+        <div className="glass-panel flex-1 flex flex-col items-center gap-6 py-10 px-8 shadow-lg">
           <img src="/icons/AWS Student Builder Group_RGB_Icons_Teams_Purple.svg" alt="Teams" className="w-12 h-12 mb-2" />
-          <h3 className="text-2xl mb-2">Join an Existing Team Session</h3>
-          <p className="text-sm text-gray-400 mb-2">Did your teammate already create a session? Enter the code below to join them.</p>
+          <h3 className="text-2xl mb-2">Make New Team</h3>
+          <p className="text-sm text-gray-400 mb-2">Start a new team session for a specific quiz.</p>
+          <form action={playQuizAction} className="flex flex-col gap-6 w-full">
+            <input type="hidden" name="mode" value="TEAM" />
+            <input 
+              name="quizCode" 
+              type="text" 
+              placeholder="4-Digit Quiz Code" 
+              className="input text-center text-lg tracking-widest uppercase" 
+              required 
+              maxLength={4}
+              minLength={4}
+            />
+            <input 
+              name="name" 
+              type="text" 
+              placeholder="Team/Your Name" 
+              className="input text-center text-lg" 
+              required 
+              maxLength={20}
+            />
+            <button type="submit" className="btn w-full mt-4 text-lg py-3">Create Team</button>
+          </form>
+        </div>
+
+        {/* Join Your Team Section */}
+        <div className="glass-panel flex-1 flex flex-col items-center gap-6 py-10 px-8 shadow-lg">
+          <img src="/icons/AWS Student Builder Group_RGB_Icons_Teams_Purple.svg" alt="Teams" className="w-12 h-12 mb-2" />
+          <h3 className="text-2xl mb-2">Join Your Team</h3>
+          <p className="text-sm text-gray-400 mb-2">Enter the team invite code to join your teammate.</p>
           <form action={joinSession} className="flex flex-col gap-6 w-full">
             <input 
               name="joinCode" 
               type="text" 
-              placeholder="4-Digit Join Code" 
-              className="input text-center text-lg tracking-widest" 
+              placeholder="4-Digit Invite Code" 
+              className="input text-center text-lg tracking-widest uppercase" 
               required 
               maxLength={4}
               minLength={4}

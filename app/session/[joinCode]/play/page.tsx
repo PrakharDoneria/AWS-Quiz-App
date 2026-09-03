@@ -32,6 +32,7 @@ export default async function PlayPage({
     <main className="container flex flex-col items-center justify-center gap-4 mt-8">
       <PlayClient 
         sessionId={session.id}
+        quizId={session.quizId}
         joinCode={joinCode}
         participantId={participantId}
         questions={questions}
