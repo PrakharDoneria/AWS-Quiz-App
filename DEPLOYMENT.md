@@ -76,6 +76,11 @@ AWS Amplify Hosting for Next.js does not automatically inject execution role cre
 3. Add two new variables:
    - `ACCESS_KEY_ID`: (paste your access key ID)
    - `SECRET_ACCESS_KEY`: (paste your secret access key)
+
+### Step 3.4: Amplify Build Settings (`amplify.yml`)
+AWS Amplify does not automatically pass environment variables to the Next.js Server Actions at runtime. 
+To fix this, an `amplify.yml` file is included in this repository. During the Amplify build process, it copies your environment variables into a `.env.production` file so the Next.js backend can read them.
+
 4. Trigger a new build/deployment in Amplify for the environment variables to take effect.
 
 ## 4. Local Development
