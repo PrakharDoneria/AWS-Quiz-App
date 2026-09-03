@@ -1,16 +1,32 @@
+@import "tailwindcss";
+
+@font-face {
+  font-family: 'Amazon Ember';
+  src: url('/fonts/AmazonEmberDisplay_HeIt.ttf') format('truetype');
+  font-weight: normal;
+  font-style: italic;
+}
+
+@font-face {
+  font-family: 'Amazon Ember';
+  src: url('/fonts/AmazonEmberDisplay_BdIt.ttf') format('truetype');
+  font-weight: bold;
+  font-style: italic;
+}
+
 :root {
-  --background: #f0f8ff; /* Light playful blue/cyan */
-  --foreground: #111111;
-  --primary: #ffd93b; /* Vibrant Yellow */
-  --primary-hover: #ffc800;
-  --secondary: #ffb1e6; /* Soft pink */
-  --secondary-hover: #ff9ee0;
-  --tertiary: #a1c4fd; /* Soft blue */
-  --card-bg: #ffffff;
-  --border: #000000;
-  --success: #a8e6cf;
-  --danger: #ff8b94;
-  --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --background: #1a1f2b; /* Dark slate background */
+  --foreground: #ffffff; /* White text */
+  --primary: #f79a1f; /* AWS Orange */
+  --primary-hover: #e58a17;
+  --secondary: #af6cff; /* Purple */
+  --secondary-hover: #995cdd;
+  --tertiary: #41aff3; /* Blue */
+  --card-bg: #222f3e; /* Dark Box */
+  --border: #445167; /* Subdued border */
+  --success: #00e376; /* Green */
+  --danger: #ff50ff; /* Pink used for danger/alert */
+  --font-family: 'Amazon Ember', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
 }
 
 body {
@@ -21,10 +37,6 @@ body {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background-image: 
-    radial-gradient(circle at 15% 50%, rgba(255, 177, 230, 0.4) 0%, transparent 50%),
-    radial-gradient(circle at 85% 30%, rgba(255, 217, 59, 0.4) 0%, transparent 50%);
-  background-attachment: fixed;
 }
 
 * {
@@ -46,7 +58,7 @@ h1 {
 }
 
 p {
-  color: #333333;
+  color: #cccccc;
   line-height: 1.6;
   font-weight: 500;
 }
@@ -54,10 +66,10 @@ p {
 /* Neobrutalism Cards */
 .glass-panel, .neo-card {
   background: var(--card-bg);
-  border: 3px solid var(--border);
-  border-radius: 16px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
   padding: 2rem;
-  box-shadow: 6px 6px 0px 0px var(--border);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
@@ -68,64 +80,65 @@ p {
   justify-content: center;
   gap: 0.5rem;
   background-color: var(--primary);
-  color: var(--foreground);
-  border: 3px solid var(--border);
+  color: #000000;
+  border: none;
   padding: 0.75rem 1.5rem;
   font-size: 1.1rem;
   font-weight: 700;
-  border-radius: 12px;
+  border-radius: 4px;
   cursor: pointer;
-  box-shadow: 4px 4px 0px 0px var(--border);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
   transition: all 0.15s ease;
   text-decoration: none;
 }
 
 .btn:hover:not(:disabled) {
   background-color: var(--primary-hover);
-  transform: translate(2px, 2px);
-  box-shadow: 2px 2px 0px 0px var(--border);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px rgba(0,0,0,0.3);
 }
 
 .btn:active:not(:disabled) {
-  transform: translate(4px, 4px);
-  box-shadow: 0px 0px 0px 0px var(--border);
+  transform: translateY(1px);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.2);
 }
 
 .btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
   transform: none !important;
-  box-shadow: 4px 4px 0px 0px var(--border) !important;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2) !important;
 }
 
 .btn-secondary {
   background-color: var(--card-bg);
+  color: var(--foreground);
+  border: 1px solid var(--border);
 }
 
 .btn-secondary:hover:not(:disabled) {
-  background-color: #f1f1f1;
+  background-color: #2a384a;
 }
 
 /* Inputs */
 .input {
   width: 100%;
   padding: 0.85rem 1rem;
-  background: var(--card-bg);
-  border: 3px solid var(--border);
-  border-radius: 12px;
+  background: #151a24;
+  border: 1px solid var(--border);
+  border-radius: 4px;
   color: var(--foreground);
   font-size: 1rem;
   font-family: inherit;
   font-weight: 500;
-  box-shadow: 3px 3px 0px 0px var(--border);
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
   transition: all 0.2s ease;
 }
 
 .input:focus {
   outline: none;
-  background-color: #ffffe0;
-  transform: translate(2px, 2px);
-  box-shadow: 1px 1px 0px 0px var(--border);
+  border-color: var(--tertiary);
+  box-shadow: 0 0 0 2px rgba(65, 175, 243, 0.3);
 }
 
 /* Special Elements */
@@ -231,28 +244,29 @@ p {
 /* Override legacy transparent styles used in dark mode */
 .bg-white\/5, .bg-white\/10, .bg-black\/20, .bg-black\/30, .bg-black\/40 {
   background-color: var(--card-bg);
-  border: 3px solid var(--border);
-  box-shadow: 2px 2px 0px 0px var(--border);
+  border: 1px solid var(--border);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
 }
 
 .bg-primary\/20 {
   background-color: var(--primary) !important;
-  border: 3px solid var(--border) !important;
-  box-shadow: 2px 2px 0px 0px var(--border) !important;
+  border: 1px solid var(--primary-hover) !important;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2) !important;
+  color: #000000 !important;
 }
 
 .bg-success\/20 {
   background-color: var(--success) !important;
-  border: 3px solid var(--border) !important;
-  box-shadow: 2px 2px 0px 0px var(--border) !important;
+  border: 1px solid #00c266 !important;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2) !important;
   color: #000 !important;
 }
 
 .bg-danger\/20 {
   background-color: var(--danger) !important;
-  border: 3px solid var(--border) !important;
-  box-shadow: 2px 2px 0px 0px var(--border) !important;
-  color: #000 !important;
+  border: 1px solid #e040e0 !important;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2) !important;
+  color: #fff !important;
 }
 
 .border-white\/10, .border-white\/5, .border-white\/20 {
