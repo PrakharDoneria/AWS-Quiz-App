@@ -28,35 +28,17 @@ This guide explains how to deploy the AWS Quiz App to **AWS Amplify Hosting** an
 > [!NOTE]
 > During the first build, the app will deploy successfully, but database operations will fail because the Amplify SSR role doesn't have permission to access DynamoDB yet. We will fix this in the next step.
 
-## 3. Configure the IAM Role (Least Privilege)
+## 3. Configure IAM Access
 
-### Important Note about `QuizAppLambdaRole`
-AWS Amplify Hosting operates as a fully managed service. When you deploy a Next.js application, Amplify automatically provisions a hidden Lambda function for Server-Side Rendering (SSR) and generates a dedicated execution role for it. 
-**You cannot directly assign your existing `QuizAppLambdaRole` to the Next.js SSR runtime in the Amplify Console.**
+AWS Amplify Hosting for Next.js does not automatically inject execution role credentials to the Next.js Server Actions. To securely access DynamoDB, you must create a dedicated IAM User with least-privilege permissions and provide its Access Keys to Amplify via Environment Variables.
 
-To use your existing role securely, you would have to write complex `sts:AssumeRole` code in Next.js to jump from the Amplify role to `QuizAppLambdaRole`. 
-The officially supported and much simpler approach is to **find the auto-generated role created by Amplify and attach our least-privilege policy directly to it.**
-
-Here are the exact AWS Console steps to do this:
-
-### Step 3.1: Find the Amplify SSR Role
+### Step 3.1: Create an IAM User
 1. Log in to the **AWS Management Console**.
-2. Go to the **IAM (Identity and Access Management)** service.
-3. In the left navigation pane, click on **Roles**.
-4. In the search box, search for your Amplify app's ID or type `AmplifySSRLoggingRole`.
-5. You will see a role with a name similar to `amplify-<your-app-id>-<env>-AmplifySSRLoggingRole-<random>`. Click on this role name to open its details.
-
-### Step 3.2: Remove Broad Permissions (If Any)
-If you see any broad permissions like `AmazonDynamoDBFullAccess` attached to this role, remove them. 
-1. Under the **Permissions** tab, look at the attached policies.
-2. If you see full access policies, select the checkbox next to them and click **Remove**.
-
-### Step 3.3: Attach the Least-Privilege Policy
-We will now attach a policy that allows *only* the specific actions required for the `quiz-app` table.
-1. Still on the Role's **Permissions** tab, click the **Add permissions** dropdown button.
-2. Select **Create inline policy**.
-3. In the Policy editor, select the **JSON** tab (or toggle "JSON" view).
-4. Delete the empty template and paste the following exact JSON:
+2. Go to the **IAM** service and click **Users** -> **Create user**.
+3. Name the user (e.g., `quiz-app-dynamo-user`) and click **Next**.
+4. Choose **Attach policies directly**.
+5. We will create a least-privilege policy. Click **Create policy** (opens in a new tab).
+6. In the Policy editor, select the **JSON** tab and paste the following exact JSON:
 
 ```json
 {
@@ -68,20 +50,33 @@ We will now attach a policy that allows *only* the specific actions required for
                 "dynamodb:PutItem",
                 "dynamodb:GetItem",
                 "dynamodb:UpdateItem",
-                "dynamodb:Query"
+                "dynamodb:Query",
+                "dynamodb:Scan"
             ],
             "Resource": "arn:aws:dynamodb:REGION:ACCOUNT_ID:table/quiz-app"
         }
     ]
 }
 ```
+*CRITICAL:* Replace `REGION` with your region (e.g., `ap-south-1`) and `ACCOUNT_ID` with your 12-digit AWS account ID.
 
-5. **CRITICAL:** Replace `REGION` with your region (e.g., `ap-south-1`) and `ACCOUNT_ID` with your 12-digit AWS account ID.
-6. Click **Next** (or **Review policy**).
-7. Give the policy a name, for example: `QuizAppDynamoDBLeastPrivilege`.
-8. Click **Create policy**.
+7. Click **Next**, name the policy `QuizAppDynamoDBLeastPrivilege`, and click **Create policy**.
+8. Go back to the user creation tab, refresh the policies list, select `QuizAppDynamoDBLeastPrivilege`, and finish creating the user.
 
-Your Next.js SSR runtime now has the exact permissions it needs to connect to DynamoDB without any hardcoded credentials!
+### Step 3.2: Generate Access Keys
+1. Click on your newly created user.
+2. Go to the **Security credentials** tab.
+3. Scroll down to **Access keys** and click **Create access key**.
+4. Choose **Application running outside AWS** and click **Next**.
+5. Copy the **Access key ID** and **Secret access key**. (Keep these safe!)
+
+### Step 3.3: Add Credentials to Amplify
+1. Go back to your App in the **AWS Amplify Console**.
+2. Navigate to **Hosting** -> **Environment variables**.
+3. Add two new variables:
+   - `ACCESS_KEY_ID`: (paste your access key ID)
+   - `SECRET_ACCESS_KEY`: (paste your secret access key)
+4. Trigger a new build/deployment in Amplify for the environment variables to take effect.
 
 ## 4. Local Development
 

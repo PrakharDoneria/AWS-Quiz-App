@@ -6,6 +6,14 @@ import { DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
 // In production on AWS Amplify, it will automatically use the IAM role attached to the SSR function.
 const client = new DynamoDBClient({
   region: process.env.REGION || "ap-south-1",
+  ...(process.env.ACCESS_KEY_ID && process.env.SECRET_ACCESS_KEY
+    ? {
+      credentials: {
+        accessKeyId: process.env.ACCESS_KEY_ID,
+        secretAccessKey: process.env.SECRET_ACCESS_KEY,
+      },
+    }
+    : {}),
 });
 
 const ddbDocClient = DynamoDBDocumentClient.from(client, {
