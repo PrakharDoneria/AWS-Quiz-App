@@ -13,7 +13,7 @@ export default function QuizBuilderClient() {
   
   const [questions, setQuestions] = useState([
     {
-      id: uuidv4(),
+      id: "q-1",
       text: "",
       difficulty: "MEDIUM",
       points: 10,

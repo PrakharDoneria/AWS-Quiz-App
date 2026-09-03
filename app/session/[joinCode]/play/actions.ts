@@ -8,7 +8,8 @@ export async function submitAnswerAction(
   sessionId: string,
   participantId: string,
   questionId: string,
-  selectedOptionId: string
+  selectedOptionId: string,
+  timeTaken: number
 ) {
   const session = await getSession(sessionId);
   if (!session) throw new Error("Session not found");
@@ -19,7 +20,7 @@ export async function submitAnswerAction(
 
   const isCorrect = question.correctOptionId === selectedOptionId;
 
-  await dbSubmitAnswer(sessionId, participantId, questionId, selectedOptionId, isCorrect);
+  await dbSubmitAnswer(sessionId, participantId, questionId, selectedOptionId, isCorrect, timeTaken);
 
   return { success: true, isCorrect };
 }

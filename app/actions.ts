@@ -85,3 +85,26 @@ export async function joinSession(formData: FormData) {
     redirect(`/session/${joinCode}/lobby?participantId=${participantId}`);
   }
 }
+
+export async function viewLeaderboardAction(formData: FormData) {
+  const quizCode = formData.get("quizCode")?.toString().toUpperCase();
+  let errorMessage;
+  let targetQuizId;
+
+  try {
+    if (!quizCode) throw new Error("Quiz Code is required");
+    
+    const quiz = await getQuizByCode(quizCode);
+    if (!quiz) throw new Error("Invalid Quiz Code");
+    
+    targetQuizId = quiz.id;
+  } catch (error: any) {
+    errorMessage = error.message || String(error);
+  }
+
+  if (errorMessage) {
+    redirect(`/?error=${encodeURIComponent(errorMessage)}`);
+  } else {
+    redirect(`/leaderboard/${targetQuizId}`);
+  }
+}

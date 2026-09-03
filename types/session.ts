@@ -15,6 +15,8 @@ export interface Participant {
   status: 'JOINED' | 'IN_PROGRESS' | 'COMPLETED';
   joinedAt: string;
   score: number;
+  totalTimeTaken?: number;
+  avgTimePerQuestion?: number;
 }
 
 export interface Answer {
@@ -23,6 +25,7 @@ export interface Answer {
   questionId: string;
   selectedOptionId: string;
   isCorrect: boolean;
+  timeTaken: number;
   submittedAt: string;
 }
 

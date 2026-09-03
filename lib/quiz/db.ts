@@ -316,7 +316,14 @@ export async function getParticipants(sessionId: string): Promise<Participant[]>
   return (response.Items as Participant[]) || [];
 }
 
-export async function updateParticipantStatus(sessionId: string, participantId: string, status: 'JOINED' | 'IN_PROGRESS' | 'COMPLETED', score?: number) {
+export async function updateParticipantStatus(
+  sessionId: string, 
+  participantId: string, 
+  status: 'JOINED' | 'IN_PROGRESS' | 'COMPLETED', 
+  score?: number,
+  totalTimeTaken?: number,
+  avgTimePerQuestion?: number
+) {
   let updateExp = "SET #st = :st";
   const expNames: Record<string, string> = { "#st": "status" };
   const expVals: Record<string, any> = { ":st": status };
@@ -325,6 +332,16 @@ export async function updateParticipantStatus(sessionId: string, participantId: 
     updateExp += ", #sc = :sc";
     expNames["#sc"] = "score";
     expVals[":sc"] = score;
+  }
+  if (totalTimeTaken !== undefined) {
+    updateExp += ", #tt = :tt";
+    expNames["#tt"] = "totalTimeTaken";
+    expVals[":tt"] = totalTimeTaken;
+  }
+  if (avgTimePerQuestion !== undefined) {
+    updateExp += ", #avg = :avg";
+    expNames["#avg"] = "avgTimePerQuestion";
+    expVals[":avg"] = avgTimePerQuestion;
   }
 
   await ddbDocClient.send(new UpdateCommand({
@@ -339,13 +356,21 @@ export async function updateParticipantStatus(sessionId: string, participantId: 
   }));
 }
 
-export async function submitAnswer(sessionId: string, participantId: string, questionId: string, selectedOptionId: string, isCorrect: boolean) {
+export async function submitAnswer(
+  sessionId: string, 
+  participantId: string, 
+  questionId: string, 
+  selectedOptionId: string, 
+  isCorrect: boolean,
+  timeTaken: number
+) {
   const answer = {
     sessionId,
     participantId,
     questionId,
     selectedOptionId,
     isCorrect,
+    timeTaken,
     submittedAt: new Date().toISOString(),
   };
 
