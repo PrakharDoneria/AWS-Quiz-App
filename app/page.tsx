@@ -1,12 +1,22 @@
 import { createDemoQuiz, joinSession } from "./actions";
 import { BrainCircuit, Play, Users } from "lucide-react";
 
-export default function Home() {
+export default async function Home({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
+  const params = await searchParams;
+  const errorMsg = params.error;
+
   return (
     <main className="container flex flex-col items-center justify-center gap-4 mt-8 text-center">
       <BrainCircuit size={64} className="mb-6" style={{ color: "var(--primary)" }} />
       <h1>AWS Quiz Master</h1>
       <p>Test your knowledge or challenge your friends in real-time.</p>
+
+      {errorMsg && (
+        <div className="bg-red-500/10 border border-red-500/50 text-red-500 p-4 rounded-md mt-4 max-w-lg">
+          <p className="font-bold">Error Occurred</p>
+          <p className="text-sm break-words">{errorMsg}</p>
+        </div>
+      )}
 
       <div className="grid grid-cols-2 gap-4 mt-8 w-full">
         <div className="glass-panel flex flex-col items-center gap-4">
