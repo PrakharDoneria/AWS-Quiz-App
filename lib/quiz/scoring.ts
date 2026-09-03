@@ -1,18 +1,43 @@
-export function calculateTeamScore(participantScores: number[]): number {
-  if (!participantScores || participantScores.length === 0) return 0;
+import { getQuestions, getAnswersForParticipant, getParticipants, updateParticipantStatus, updateSessionStatus, getSession } from "./db";
+
+export async function calculateParticipantScore(sessionId: string, participantId: string, quizId: string): Promise<number> {
+  const questions = await getQuestions(quizId);
+  const answers = await getAnswersForParticipant(sessionId, participantId);
+
+  const totalQuestions = questions.length;
+  if (totalQuestions === 0) return 0;
+
+  let correctCount = 0;
+  for (const q of questions) {
+    const answer = answers.find(a => a.questionId === q.id);
+    if (answer && answer.selectedOptionId === q.correctOptionId) {
+      correctCount++;
+    }
+  }
+
+  const score = Math.round((correctCount / totalQuestions) * 100);
   
-  // To avoid biasing against duos with varying skill levels (or solos playing against duos),
-  // we take the highest individual score in the team as the team's final score.
-  // This ensures no one is punished for teaming up.
-  return Math.max(...participantScores);
+  await updateParticipantStatus(sessionId, participantId, 'COMPLETED', score);
+  
+  return score;
 }
 
-export function calculateParticipantScore(answers: any[], questions: any[]): number {
-  return answers.reduce((total, answer) => {
-    if (answer.isCorrect) {
-      const q = questions.find((q: any) => q.id === answer.questionId);
-      return total + (q?.points || 10);
-    }
-    return total;
-  }, 0);
+export async function calculateTeamScore(sessionId: string): Promise<number | null> {
+  const session = await getSession(sessionId);
+  if (!session) return null;
+
+  const participants = await getParticipants(sessionId);
+  if (participants.length === 0) return 0;
+
+  const allCompleted = participants.every(p => p.status === 'COMPLETED');
+  if (!allCompleted) {
+    return null;
+  }
+
+  const totalScore = participants.reduce((sum, p) => sum + p.score, 0);
+  const averageScore = Math.round(totalScore / participants.length);
+
+  await updateSessionStatus(sessionId, 'COMPLETED');
+  
+  return averageScore;
 }

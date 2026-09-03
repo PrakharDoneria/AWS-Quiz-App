@@ -1,6 +1,6 @@
 import { getSessionByJoinCode, getParticipants, updateSessionStatus } from "@/lib/quiz/db";
 import { redirect } from "next/navigation";
-import { Users } from "lucide-react";
+import LobbyClient from "./LobbyClient";
 
 export default async function LobbyPage({
   params,
@@ -21,7 +21,7 @@ export default async function LobbyPage({
 
   async function startQuiz() {
     "use server";
-    await updateSessionStatus(session!.id, "ACTIVE");
+    await updateSessionStatus(session!.id, "ACTIVE", new Date().toISOString());
     redirect(`/session/${joinCode}/play${participantId ? `?participantId=${participantId}` : ''}`);
   }
 
@@ -32,38 +32,12 @@ export default async function LobbyPage({
 
   return (
     <main className="container flex flex-col items-center justify-center gap-4 mt-8">
-      <div className="glass-panel text-center w-full max-w-md">
-        <h2>Quiz Lobby</h2>
-        <div className="my-6">
-          <p className="text-sm uppercase tracking-wider mb-2">Join Code</p>
-          <div className="text-4xl font-bold tracking-widest bg-black/30 py-4 rounded-lg">
-            {session.joinCode}
-          </div>
-        </div>
-
-        <div className="mb-8">
-          <h3 className="flex items-center justify-center gap-2 mb-4">
-            <Users size={20} /> Players ({participants.length})
-          </h3>
-          {participants.length === 0 ? (
-            <p className="text-gray-400">Waiting for players to join...</p>
-          ) : (
-            <ul className="flex flex-col gap-2">
-              {participants.map(p => (
-                <li key={p.id} className="bg-white/5 p-3 rounded-md border border-white/10">
-                  {p.name} {p.id === participantId ? "(You)" : ""}
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-
-        <form action={startQuiz}>
-          <button type="submit" className="btn w-full" disabled={participants.length === 0}>
-            Start Quiz
-          </button>
-        </form>
-      </div>
+      <LobbyClient 
+        session={session} 
+        participants={participants} 
+        participantId={participantId || ""} 
+        startQuizAction={startQuiz} 
+      />
     </main>
   );
 }

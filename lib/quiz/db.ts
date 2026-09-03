@@ -1,5 +1,5 @@
 import { ddbDocClient, TableName } from "../aws/dynamodb";
-import { PutCommand, GetCommand, QueryCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
+import { PutCommand, GetCommand, QueryCommand, UpdateCommand, DeleteCommand, ScanCommand } from "@aws-sdk/lib-dynamodb";
 import { Quiz, Question } from "../../types/quiz";
 import { Session, Participant, Answer, SessionResult } from "../../types/session";
 import { v4 as uuidv4 } from "uuid";
@@ -72,6 +72,30 @@ export async function getQuiz(quizId: string): Promise<Quiz | null> {
   return response.Item ? (response.Item as Quiz) : null;
 }
 
+export async function getAllQuizzes(): Promise<Quiz[]> {
+  const response = await ddbDocClient.send(new ScanCommand({
+    TableName,
+    FilterExpression: "SK = :sk AND begins_with(PK, :pk)",
+    ExpressionAttributeValues: {
+      ":sk": "METADATA",
+      ":pk": "QUIZ#",
+    }
+  }));
+  return (response.Items as Quiz[]) || [];
+}
+
+export async function deleteQuiz(quizId: string) {
+  // To keep it simple, we just delete the quiz metadata.
+  // In production, we'd query and delete all questions too.
+  await ddbDocClient.send(new DeleteCommand({
+    TableName,
+    Key: {
+      PK: quizPK(quizId),
+      SK: "METADATA",
+    }
+  }));
+}
+
 export async function getQuestions(quizId: string): Promise<Question[]> {
   const response = await ddbDocClient.send(new QueryCommand({
     TableName,
@@ -88,12 +112,13 @@ function generateJoinCode(): string {
   return Math.floor(1000 + Math.random() * 9000).toString();
 }
 
-export async function createSession(quizId: string): Promise<SessionState> {
+export async function createSession(quizId: string, mode: 'SOLO' | 'TEAM'): Promise<SessionState> {
   const session: SessionState = {
     id: uuidv4(),
     quizId,
     joinCode: generateJoinCode(),
     status: 'WAITING',
+    mode,
     createdAt: new Date().toISOString(),
   };
 
@@ -158,16 +183,26 @@ export async function getSession(sessionId: string): Promise<SessionState | null
   return sessionItem.Item ? (sessionItem.Item as SessionState) : null;
 }
 
-export async function updateSessionStatus(sessionId: string, status: 'WAITING' | 'ACTIVE' | 'COMPLETED') {
+export async function updateSessionStatus(sessionId: string, status: 'WAITING' | 'ACTIVE' | 'COMPLETED', startedAt?: string) {
+  let updateExp = "SET #status = :status";
+  const expNames: Record<string, string> = { "#status": "status" };
+  const expVals: Record<string, any> = { ":status": status };
+
+  if (startedAt) {
+    updateExp += ", #startedAt = :startedAt";
+    expNames["#startedAt"] = "startedAt";
+    expVals[":startedAt"] = startedAt;
+  }
+
   await ddbDocClient.send(new UpdateCommand({
     TableName,
     Key: {
       PK: sessionPK(sessionId),
       SK: "METADATA",
     },
-    UpdateExpression: "SET #status = :status",
-    ExpressionAttributeNames: { "#status": "status" },
-    ExpressionAttributeValues: { ":status": status }
+    UpdateExpression: updateExp,
+    ExpressionAttributeNames: expNames,
+    ExpressionAttributeValues: expVals
   }));
 }
 
@@ -176,6 +211,7 @@ export async function addParticipant(sessionId: string, name: string): Promise<P
     id: uuidv4(),
     sessionId,
     name,
+    status: 'JOINED',
     joinedAt: new Date().toISOString(),
     score: 0
   };
@@ -202,6 +238,29 @@ export async function getParticipants(sessionId: string): Promise<Participant[]>
     }
   }));
   return (response.Items as Participant[]) || [];
+}
+
+export async function updateParticipantStatus(sessionId: string, participantId: string, status: 'JOINED' | 'IN_PROGRESS' | 'COMPLETED', score?: number) {
+  let updateExp = "SET #st = :st";
+  const expNames: Record<string, string> = { "#st": "status" };
+  const expVals: Record<string, any> = { ":st": status };
+
+  if (score !== undefined) {
+    updateExp += ", #sc = :sc";
+    expNames["#sc"] = "score";
+    expVals[":sc"] = score;
+  }
+
+  await ddbDocClient.send(new UpdateCommand({
+    TableName,
+    Key: {
+      PK: sessionPK(sessionId),
+      SK: `PARTICIPANT#${participantId}`,
+    },
+    UpdateExpression: updateExp,
+    ExpressionAttributeNames: expNames,
+    ExpressionAttributeValues: expVals
+  }));
 }
 
 export async function submitAnswer(sessionId: string, participantId: string, questionId: string, selectedOptionId: string, isCorrect: boolean) {

@@ -2,6 +2,8 @@
 
 import { submitAnswer as dbSubmitAnswer, getSession, getQuestions, updateSessionStatus } from "@/lib/quiz/db";
 
+import { calculateParticipantScore, calculateTeamScore } from "@/lib/quiz/scoring";
+
 export async function submitAnswerAction(
   sessionId: string,
   participantId: string,
@@ -22,6 +24,10 @@ export async function submitAnswerAction(
   return { success: true, isCorrect };
 }
 
-export async function finishQuizAction(sessionId: string) {
-  await updateSessionStatus(sessionId, "COMPLETED");
+export async function finishQuizAction(sessionId: string, participantId: string, quizId: string) {
+  // Calculate individual score and mark participant as COMPLETED
+  await calculateParticipantScore(sessionId, participantId, quizId);
+  
+  // Try to calculate team score (will only happen if all participants are COMPLETED)
+  await calculateTeamScore(sessionId);
 }

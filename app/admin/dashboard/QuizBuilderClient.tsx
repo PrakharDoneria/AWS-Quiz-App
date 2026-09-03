@@ -105,7 +105,7 @@ export default function QuizBuilderClient() {
       });
       const result = await saveBuiltQuizAction(payload);
       if (result.success) {
-        router.push(`/session/${result.joinCode}/lobby`);
+        router.push(`/admin/manage`);
       }
     } catch (e) {
       console.error(e);

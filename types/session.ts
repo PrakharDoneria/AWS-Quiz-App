@@ -1,15 +1,18 @@
 export interface Session {
   id: string;
   quizId: string;
-  joinCode: string; // 6-character short code for joining
+  joinCode: string; // 4-digit code for joining
   status: 'WAITING' | 'ACTIVE' | 'COMPLETED';
+  mode: 'SOLO' | 'TEAM';
   createdAt: string;
+  startedAt?: string;
 }
 
 export interface Participant {
   id: string;
   sessionId: string;
   name: string;
+  status: 'JOINED' | 'IN_PROGRESS' | 'COMPLETED';
   joinedAt: string;
   score: number;
 }
