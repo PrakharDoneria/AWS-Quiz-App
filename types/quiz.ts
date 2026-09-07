@@ -4,6 +4,10 @@ export interface Quiz {
   title: string;
   description?: string;
   createdAt: string;
+  status: 'DRAFT' | 'ACTIVE' | 'ENDED';
+  scheduleMode: 'MANUAL' | 'AUTO';
+  startTime?: string;
+  endTime?: string;
 }
 
 export interface Question {

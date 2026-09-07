@@ -32,3 +32,9 @@ export async function finishQuizAction(sessionId: string, participantId: string,
   // Try to calculate team score (will only happen if all participants are COMPLETED)
   await calculateTeamScore(sessionId);
 }
+
+export async function checkQuizStatusAction(quizId: string) {
+  const { getQuiz } = await import("@/lib/quiz/db");
+  const quiz = await getQuiz(quizId);
+  return quiz?.status;
+}

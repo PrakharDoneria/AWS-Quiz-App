@@ -22,6 +22,22 @@ export async function playQuizAction(formData: FormData) {
       throw new Error("Invalid Quiz Code");
     }
 
+    if (quiz.status === 'ENDED') {
+      throw new Error("This quiz has already ended.");
+    }
+    
+    // Also, if it's MANUAL and DRAFT, maybe block it? Or AUTO and not started?
+    if (quiz.scheduleMode === 'AUTO') {
+      const now = new Date().getTime();
+      const startTime = quiz.startTime ? new Date(quiz.startTime).getTime() : 0;
+      const endTime = quiz.endTime ? new Date(quiz.endTime).getTime() : Infinity;
+      
+      if (now < startTime) throw new Error("This quiz has not started yet.");
+      if (now > endTime) throw new Error("This quiz has already ended.");
+    } else if (quiz.status === 'DRAFT') {
+      throw new Error("This quiz is not active yet.");
+    }
+
     const session = await createSession(quiz.id, mode);
     sessionJoinCode = session.joinCode;
 
@@ -62,6 +78,25 @@ export async function joinSession(formData: FormData) {
     const session = await getSessionByJoinCode(joinCode);
     if (!session) {
       throw new Error("Invalid join code");
+    }
+    
+    // Check if the quiz is active
+    const { getQuiz } = await import("@/lib/quiz/db");
+    const quiz = await getQuiz(session.quizId);
+    if (quiz) {
+      if (quiz.status === 'ENDED') {
+        throw new Error("This quiz has already ended.");
+      }
+      if (quiz.scheduleMode === 'AUTO') {
+        const now = new Date().getTime();
+        const startTime = quiz.startTime ? new Date(quiz.startTime).getTime() : 0;
+        const endTime = quiz.endTime ? new Date(quiz.endTime).getTime() : Infinity;
+        
+        if (now < startTime) throw new Error("This quiz has not started yet.");
+        if (now > endTime) throw new Error("This quiz has already ended.");
+      } else if (quiz.status === 'DRAFT') {
+        throw new Error("This quiz is not active yet.");
+      }
     }
 
     const participants = await getParticipants(session.id);

@@ -25,19 +25,24 @@ export default async function PlayPage({
     redirect(`/session/${joinCode}/results?participantId=${participantId}`);
   }
 
+  const { getQuiz } = await import("@/lib/quiz/db");
+  const quiz = await getQuiz(session.quizId);
+  if (!quiz) {
+    return <div>Quiz not found</div>;
+  }
+
   const questions = await getQuestions(session.quizId);
   const existingAnswers = await getAnswersForParticipant(session.id, participantId);
 
   return (
-    <main className="container flex flex-col items-center justify-center gap-4 mt-8">
-      <PlayClient 
-        sessionId={session.id}
-        quizId={session.quizId}
-        joinCode={joinCode}
-        participantId={participantId}
-        questions={questions}
-        existingAnswers={existingAnswers}
-      />
-    </main>
+    <PlayClient
+      sessionId={session.id}
+      quizId={session.quizId}
+      joinCode={joinCode}
+      participantId={participantId!}
+      questions={questions}
+      existingAnswers={existingAnswers}
+      quiz={quiz}
+    />
   );
 }

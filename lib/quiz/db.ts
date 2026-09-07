@@ -18,6 +18,8 @@ export async function createQuiz(title: string, description: string = ""): Promi
     title,
     description,
     createdAt: new Date().toISOString(),
+    status: 'ACTIVE',
+    scheduleMode: 'MANUAL',
   };
 
   await ddbDocClient.send(new PutCommand({
@@ -125,36 +127,8 @@ export async function deleteQuiz(quizId: string) {
     }));
   }
 
-  // 3. Scan for all sessions belonging to this quiz
-  const sessionsRes = await ddbDocClient.send(new ScanCommand({
-    TableName,
-    FilterExpression: "SK = :sk AND quizId = :quizId",
-    ExpressionAttributeValues: { ":sk": "METADATA", ":quizId": quizId }
-  }));
-  const sessions = sessionsRes.Items || [];
-
-  for (const s of sessions) {
-    // 3a. Delete the JOINCODE mapping
-    await ddbDocClient.send(new DeleteCommand({
-      TableName,
-      Key: { PK: `JOINCODE#${s.joinCode}`, SK: "METADATA" }
-    }));
-
-    // 3b. Query and delete EVERYTHING under the Session (Metadata, Participants, Answers)
-    const sessionItemsRes = await ddbDocClient.send(new QueryCommand({
-      TableName,
-      KeyConditionExpression: "PK = :pk",
-      ExpressionAttributeValues: { ":pk": sessionPK(s.id) }
-    }));
-    const sessionItems = sessionItemsRes.Items || [];
-
-    for (const item of sessionItems) {
-      await ddbDocClient.send(new DeleteCommand({
-        TableName,
-        Key: { PK: item.PK, SK: item.SK }
-      }));
-    }
-  }
+  // 3. Delete all submissions for this quiz
+  await deleteQuizSubmissions(quizId);
 
   // 4. Delete the QUIZCODE mapping
   await ddbDocClient.send(new DeleteCommand({
@@ -169,6 +143,79 @@ export async function deleteQuiz(quizId: string) {
       PK: quizPK(quizId),
       SK: "METADATA",
     }
+  }));
+}
+
+export async function deleteQuizSubmissions(quizId: string) {
+  // Scan for all sessions belonging to this quiz
+  const sessionsRes = await ddbDocClient.send(new ScanCommand({
+    TableName,
+    FilterExpression: "SK = :sk AND quizId = :quizId",
+    ExpressionAttributeValues: { ":sk": "METADATA", ":quizId": quizId }
+  }));
+  const sessions = sessionsRes.Items || [];
+
+  for (const s of sessions) {
+    // 1. Delete the JOINCODE mapping
+    await ddbDocClient.send(new DeleteCommand({
+      TableName,
+      Key: { PK: `JOINCODE#${s.joinCode}`, SK: "METADATA" }
+    }));
+
+    // 2. Query and delete EVERYTHING under the Session (Metadata, Participants, Answers)
+    const sessionItemsRes = await ddbDocClient.send(new QueryCommand({
+      TableName,
+      KeyConditionExpression: "PK = :pk",
+      ExpressionAttributeValues: { ":pk": sessionPK(s.id) }
+    }));
+    const sessionItems = sessionItemsRes.Items || [];
+
+    for (const item of sessionItems) {
+      await ddbDocClient.send(new DeleteCommand({
+        TableName,
+        Key: { PK: item.PK, SK: item.SK }
+      }));
+    }
+  }
+}
+
+export async function updateQuizSettings(quizId: string, settings: Partial<Quiz>) {
+  let updateExp = "SET ";
+  const expNames: Record<string, string> = {};
+  const expVals: Record<string, any> = {};
+
+  const fields = ['status', 'scheduleMode', 'startTime', 'endTime'];
+  const updateParts: string[] = [];
+
+  for (const field of fields) {
+    const val = settings[field as keyof Quiz];
+    if (val !== undefined) {
+      if (val === null || val === "") {
+        // If we need to remove a field we can handle it here, 
+        // but for simplicity we'll just store empty string if cleared
+        updateParts.push(`#${field} = :${field}`);
+        expNames[`#${field}`] = field;
+        expVals[`:${field}`] = "";
+      } else {
+        updateParts.push(`#${field} = :${field}`);
+        expNames[`#${field}`] = field;
+        expVals[`:${field}`] = val;
+      }
+    }
+  }
+
+  if (updateParts.length === 0) return;
+  updateExp += updateParts.join(", ");
+
+  await ddbDocClient.send(new UpdateCommand({
+    TableName,
+    Key: {
+      PK: quizPK(quizId),
+      SK: "METADATA",
+    },
+    UpdateExpression: updateExp,
+    ExpressionAttributeNames: expNames,
+    ExpressionAttributeValues: expVals
   }));
 }
 

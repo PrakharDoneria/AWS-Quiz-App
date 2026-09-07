@@ -1,9 +1,10 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { Settings, Plus, Trash2, Trophy, Hammer } from "lucide-react";
+import { Settings, Plus, Trash2, Trophy, Hammer, RotateCcw } from "lucide-react";
 import Link from "next/link";
 import { getAllQuizzes } from "@/lib/quiz/db";
-import { deleteQuizAction } from "@/app/admin/manage/actions";
+import QuizScheduleClient from "./QuizScheduleClient";
+import QuizActionButtons from "./QuizActionButtons";
 
 export default async function AdminManage() {
   const cookieStore = await cookies();
@@ -40,28 +41,24 @@ export default async function AdminManage() {
             </div>
           ) : (
             quizzes.map(quiz => (
-              <div key={quiz.id} className="glass-panel flex items-center justify-between py-4 px-6">
-                <div>
-                  <h3 className="text-xl mb-1 flex items-center gap-3">
-                    {quiz.title} 
-                    {quiz.quizCode && (
-                      <span className="text-xs bg-primary/20 text-primary px-2 py-1 rounded-md border border-primary/30 tracking-widest font-mono">
-                        CODE: {quiz.quizCode}
-                      </span>
-                    )}
-                  </h3>
-                  <p className="text-sm text-gray-400">{quiz.description}</p>
+              <div key={quiz.id} className="glass-panel flex flex-col py-4 px-6 gap-2">
+                <div className="flex items-center justify-between w-full">
+                  <div>
+                    <h3 className="text-xl mb-1 flex items-center gap-3">
+                      {quiz.title} 
+                      {quiz.quizCode && (
+                        <span className="text-xs bg-primary/20 text-primary px-2 py-1 rounded-md border border-primary/30 tracking-widest font-mono">
+                          CODE: {quiz.quizCode}
+                        </span>
+                      )}
+                    </h3>
+                    <p className="text-sm text-gray-400">{quiz.description}</p>
+                  </div>
+                  <QuizActionButtons quizId={quiz.id} />
                 </div>
-                <div className="flex items-center gap-4">
-                  <Link href={`/admin/manage/${quiz.id}/leaderboard`} className="p-2 text-gray-400 hover:text-primary transition-colors" title="View Leaderboard">
-                    <Trophy size={20} />
-                  </Link>
-                  <form action={deleteQuizAction}>
-                    <input type="hidden" name="quizId" value={quiz.id} />
-                    <button type="submit" className="p-2 text-gray-400 hover:text-danger transition-colors" title="Delete Quiz">
-                      <Trash2 size={20} />
-                    </button>
-                  </form>
+                {/* Schedule & Status */}
+                <div className="w-full mt-2">
+                  <QuizScheduleClient quiz={quiz} />
                 </div>
               </div>
             ))
