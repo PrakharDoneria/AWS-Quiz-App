@@ -298,15 +298,15 @@ export default function PlayClient({
 
   return (
     <div
-      className="fixed inset-0 bg-[#0a0d12] flex overflow-hidden"
+      className="fixed inset-0 bg-[#0a0d12] flex flex-col md:flex-row overflow-hidden"
       style={{ fontFamily: "var(--font-family)" }}
       onContextMenu={e => e.preventDefault()}
       onCopy={e => e.preventDefault()}
     >
       {/* ── SIDEBAR ───────────────────────────────────────────────── */}
-      <aside className="w-64 shrink-0 bg-[#0e1117] border-r border-[#1e2535] flex flex-col h-full">
+      <aside className="w-full md:w-64 shrink-0 bg-[#0e1117] border-b md:border-b-0 md:border-r border-[#1e2535] flex flex-col">
         {/* Sidebar header */}
-        <div className="px-5 py-4 border-b border-[#1e2535]">
+        <div className="px-4 py-3 md:px-5 md:py-4 border-b border-[#1e2535] hidden md:block">
           <div className="flex items-center gap-2 mb-1">
             <Zap size={14} className="text-[var(--primary)]" />
             <span className="text-[var(--primary)] font-bold text-xs uppercase tracking-widest">AWS Quiz</span>
@@ -325,7 +325,7 @@ export default function PlayClient({
         </div>
 
         {/* Legend */}
-        <div className="px-5 py-3 border-b border-[#1e2535] flex gap-4 text-[10px] font-bold uppercase tracking-wider text-gray-500">
+        <div className="hidden md:flex px-5 py-3 border-b border-[#1e2535] gap-4 text-[10px] font-bold uppercase tracking-wider text-gray-500">
           <span className="flex items-center gap-1.5">
             <span className="w-2 h-2 rounded-full bg-[var(--tertiary)]" />Active
           </span>
@@ -337,15 +337,15 @@ export default function PlayClient({
           </span>
         </div>
 
-        {/* Question grid */}
-        <div className="flex-1 overflow-y-auto px-5 py-4">
-          <div className="grid grid-cols-4 gap-2">
+        {/* Question grid / list */}
+        <div className="flex-1 overflow-x-auto md:overflow-y-auto px-4 py-3 md:px-5 md:py-4 scrollbar-hide">
+          <div className="flex md:grid md:grid-cols-4 gap-2 min-w-max md:min-w-0">
             {questions.map((q, idx) => {
               const isQAnswered = answeredMap[q.id];
               const isReview = reviewMap[q.id];
               const isActive = idx === currentIndex;
 
-              let classes = "relative flex items-center justify-center w-full aspect-square rounded-lg text-sm font-black transition-all duration-200 border cursor-pointer hover:scale-105 active:scale-95 ";
+              let classes = "relative flex items-center justify-center shrink-0 md:shrink w-10 md:w-full aspect-square rounded-lg text-sm font-black transition-all duration-200 border cursor-pointer hover:scale-105 active:scale-95 ";
               if (isActive) {
                 classes += "bg-[var(--tertiary)]/20 text-[var(--tertiary)] border-[var(--tertiary)] shadow-[0_0_12px_var(--tertiary)/30]";
               } else if (isQAnswered) {
@@ -381,7 +381,7 @@ export default function PlayClient({
         </div>
 
         {/* Finish button */}
-        <div className="p-4 border-t border-[#1e2535]">
+        <div className="p-3 md:p-4 border-t border-[#1e2535] hidden md:block">
           <button
             onClick={handleFinishQuiz}
             className={`w-full py-3 rounded-xl font-bold text-sm transition-all duration-200 flex items-center justify-center gap-2 ${
@@ -399,7 +399,7 @@ export default function PlayClient({
       {/* ── MAIN CONTENT ──────────────────────────────────────────── */}
       <main className="flex-1 flex flex-col h-full overflow-hidden">
         {/* Top bar */}
-        <header className="shrink-0 bg-[#0e1117]/80 backdrop-blur-sm border-b border-[#1e2535] px-8 py-3 flex items-center justify-between">
+        <header className="shrink-0 bg-[#0e1117]/80 backdrop-blur-sm border-b border-[#1e2535] px-4 py-2 md:px-8 md:py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="bg-[var(--tertiary)]/15 border border-[var(--tertiary)]/30 rounded-lg px-3 py-1.5">
               <span className="text-[var(--tertiary)] font-black text-sm">Q{currentIndex + 1}</span>
@@ -431,17 +431,16 @@ export default function PlayClient({
             )}
           </div>
 
-          {/* Timer */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 md:gap-3">
             {isAnswered ? (
-              <div className="flex items-center gap-2 bg-[var(--success)]/10 border border-[var(--success)]/30 rounded-lg px-4 py-2">
-                <CheckCircle size={15} className="text-[var(--success)]" />
-                <span className="text-[var(--success)] font-bold text-sm">Answered</span>
+              <div className="flex items-center gap-1 md:gap-2 bg-[var(--success)]/10 border border-[var(--success)]/30 rounded-lg px-2 py-1 md:px-4 md:py-2">
+                <CheckCircle size={15} className="text-[var(--success)] hidden md:block" />
+                <span className="text-[var(--success)] font-bold text-xs md:text-sm">Answered</span>
               </div>
             ) : (
               <>
                 {/* Circular timer */}
-                <div className="relative flex items-center justify-center w-12 h-12">
+                <div className="relative flex items-center justify-center w-10 h-10 md:w-12 md:h-12 shrink-0">
                   <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 36 36">
                     <circle cx="18" cy="18" r="15.9" fill="none" stroke="#1e2535" strokeWidth="3" />
                     <circle
@@ -454,9 +453,9 @@ export default function PlayClient({
                       style={{ transition: "stroke-dashoffset 1s linear, stroke 0.5s" }}
                     />
                   </svg>
-                  <span className="relative text-xs font-black" style={{ color: timerColor }}>{timeLeft}</span>
+                  <span className="relative text-[10px] md:text-xs font-black" style={{ color: timerColor }}>{timeLeft}</span>
                 </div>
-                <div className="text-right">
+                <div className="text-right hidden md:block">
                   <div className="text-xs text-gray-500 font-medium uppercase tracking-wider">Time Left</div>
                   <div className="font-black text-white text-sm">{timeLeft}s</div>
                 </div>
@@ -466,14 +465,14 @@ export default function PlayClient({
         </header>
 
         {/* Question + Options */}
-        <div className="flex-1 overflow-y-auto px-8 py-6">
+        <div className="flex-1 overflow-y-auto px-4 py-4 md:px-8 md:py-6">
           {/* Question */}
-          <div className="mb-8 max-w-3xl">
-            <div className="text-xs text-gray-500 uppercase tracking-widest font-bold mb-3 flex items-center gap-2">
+          <div className="mb-6 md:mb-8 max-w-3xl">
+            <div className="text-[10px] md:text-xs text-gray-500 uppercase tracking-widest font-bold mb-2 md:mb-3 flex items-center gap-2">
               <span className="w-4 h-px bg-[var(--primary)]" />
               Question
             </div>
-            <h2 className="text-2xl md:text-3xl font-bold text-white leading-relaxed tracking-tight">{question.text}</h2>
+            <h2 className="text-xl md:text-3xl font-bold text-white leading-relaxed tracking-tight">{question.text}</h2>
           </div>
 
           {/* Options */}
@@ -518,16 +517,31 @@ export default function PlayClient({
 
           {/* Answered notice */}
           {isAnswered && (
-            <div className="mt-6 max-w-4xl flex items-center gap-3 bg-[var(--success)]/8 border border-[var(--success)]/25 rounded-xl px-5 py-4">
-              <CheckCircle size={18} className="text-[var(--success)] shrink-0" />
-              <p className="text-[var(--success)] font-semibold text-sm">Answer recorded. Pick another question from the sidebar.</p>
+            <div className="mt-6 max-w-4xl flex flex-col gap-4">
+              <div className="flex items-center gap-3 bg-[var(--success)]/8 border border-[var(--success)]/25 rounded-xl px-4 py-3 md:px-5 md:py-4">
+                <CheckCircle size={18} className="text-[var(--success)] shrink-0" />
+                <p className="text-[var(--success)] font-semibold text-xs md:text-sm">Answer recorded. Pick another question from the top bar.</p>
+              </div>
+              
+              {/* Mobile Finish Button (shown when viewing an answered question) */}
+              <button
+                onClick={handleFinishQuiz}
+                className={`md:hidden w-full py-3.5 rounded-xl font-bold text-sm transition-all duration-200 flex items-center justify-center gap-2 mt-4 ${
+                  allAnswered
+                    ? "bg-gradient-to-r from-[var(--primary)] to-[#e08700] text-black shadow-[0_4px_16px_var(--primary)/40]"
+                    : "bg-[#161b24] text-gray-400 border border-[#2a3040]"
+                }`}
+              >
+                <Trophy size={16} />
+                {allAnswered ? "Submit Quiz" : "Finish Early"}
+              </button>
             </div>
           )}
         </div>
 
         {/* Action bar */}
         {!isAnswered && (
-          <footer className="shrink-0 bg-[#0e1117]/80 backdrop-blur-sm border-t border-[#1e2535] px-8 py-4">
+          <footer className="shrink-0 bg-[#0e1117]/80 backdrop-blur-sm border-t border-[#1e2535] px-4 py-3 md:px-8 md:py-4">
             <div className="flex items-center gap-3 max-w-4xl">
               <button
                 disabled={isSubmitting}
@@ -541,7 +555,7 @@ export default function PlayClient({
               <button
                 disabled={!selectedOption || isSubmitting}
                 onClick={() => handleSubmit()}
-                className="flex-1 flex items-center justify-center gap-2.5 py-3 rounded-xl font-black text-base transition-all duration-200 disabled:opacity-30 disabled:cursor-not-allowed bg-gradient-to-r from-[var(--primary)] to-[#e08700] text-black hover:shadow-[0_4px_24px_var(--primary)/50] hover:-translate-y-0.5 active:translate-y-0"
+                className="flex-[2] flex items-center justify-center gap-2 md:gap-2.5 py-3 rounded-xl font-black text-sm md:text-base transition-all duration-200 disabled:opacity-30 disabled:cursor-not-allowed bg-gradient-to-r from-[var(--primary)] to-[#e08700] text-black hover:shadow-[0_4px_24px_var(--primary)/50] hover:-translate-y-0.5 active:translate-y-0"
               >
                 {isSubmitting ? (
                   <>
@@ -550,8 +564,8 @@ export default function PlayClient({
                   </>
                 ) : (
                   <>
-                    <CheckCircle size={18} />
-                    Confirm Answer
+                    <CheckCircle size={16} className="md:w-[18px] md:h-[18px]" />
+                    Confirm
                   </>
                 )}
               </button>
