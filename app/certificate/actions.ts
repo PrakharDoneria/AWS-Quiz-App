@@ -3,6 +3,7 @@
 import path from "path";
 import Papa from "papaparse";
 import sharp from "sharp";
+import TextToSVG from "text-to-svg";
 
 const CSV_URL =
   "https://docs.google.com/spreadsheets/d/e/2PACX-1vQlmxQ3TYiTXHurhPK9HppSSnfXWlASyfMAJEtJS1XwRxHXamOMcSuHLvM8LHT3XAij3gTidYaYXM_q/pub?output=csv";
@@ -16,6 +17,15 @@ const NAME_BOX = {
   height: 263,  // 1664 - 1401
 };
 
+let _textToSVG: any = null;
+function getTextToSVG() {
+  if (!_textToSVG) {
+    const fontPath = path.join(process.cwd(), "public", "fonts", "CourierNew-Bold.ttf");
+    _textToSVG = TextToSVG.loadSync(fontPath);
+  }
+  return _textToSVG;
+}
+
 /** Build an SVG snippet that centers the student name inside the bounding box */
 function makeNameSvg(name: string): Buffer {
   // Auto-scale font size so even long names fit within the box width
@@ -25,20 +35,20 @@ function makeNameSvg(name: string): Buffer {
 
   const safeName = name.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
-  // No font-family specified — librsvg on AWS Lambda will use its built-in
-  // default (DejaVu Sans / Liberation), which is always available on Amazon Linux.
-  // Specifying system fonts like "Courier New" causes □□□ boxes on Lambda
-  // because those fonts don't exist in the container.
+  // By converting text to SVG paths using text-to-svg, we completely bypass
+  // librsvg's font loading. This guarantees 100% accurate text rendering
+  // on AWS Lambda/Amplify without needing system fonts installed.
+  const svgRenderer = getTextToSVG();
+  const options = { fontSize, anchor: 'left top' };
+  const metrics = svgRenderer.getMetrics(safeName, options);
+
+  const x = (NAME_BOX.width - metrics.width) / 2;
+  const y = (NAME_BOX.height - metrics.height) / 2;
+
+  const pathD = svgRenderer.getD(safeName, { ...options, x, y });
+
   const svg = `<svg width="${NAME_BOX.width}" height="${NAME_BOX.height}" xmlns="http://www.w3.org/2000/svg">
-  <text
-    x="${NAME_BOX.width / 2}"
-    y="${NAME_BOX.height / 2}"
-    font-size="${fontSize}"
-    font-weight="bold"
-    fill="#1a1a2e"
-    text-anchor="middle"
-    dominant-baseline="middle"
-  >${safeName}</text>
+  <path d="${pathD}" fill="#1a1a2e" />
 </svg>`;
 
   return Buffer.from(svg);
