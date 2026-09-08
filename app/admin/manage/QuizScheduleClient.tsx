@@ -54,7 +54,7 @@ export default function QuizScheduleClient({ quiz }: { quiz: Quiz }) {
           {mode === 'AUTO' && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
               <div>
-                <label className="block text-xs font-bold text-gray-400 mb-1">Start Time (Optional)</label>
+                <label className="block text-xs font-bold text-gray-400 mb-1">Start Time (IST, Optional)</label>
                 <input 
                   type="datetime-local" 
                   name="startTime" 
@@ -63,7 +63,7 @@ export default function QuizScheduleClient({ quiz }: { quiz: Quiz }) {
                 />
               </div>
               <div>
-                <label className="block text-xs font-bold text-gray-400 mb-1">End Time (Optional)</label>
+                <label className="block text-xs font-bold text-gray-400 mb-1">End Time (IST, Optional)</label>
                 <input 
                   type="datetime-local" 
                   name="endTime" 

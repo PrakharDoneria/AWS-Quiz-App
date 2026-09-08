@@ -29,8 +29,8 @@ export async function playQuizAction(formData: FormData) {
     // Also, if it's MANUAL and DRAFT, maybe block it? Or AUTO and not started?
     if (quiz.scheduleMode === 'AUTO') {
       const now = new Date().getTime();
-      const startTime = quiz.startTime ? new Date(quiz.startTime).getTime() : 0;
-      const endTime = quiz.endTime ? new Date(quiz.endTime).getTime() : Infinity;
+      const startTime = quiz.startTime ? new Date(quiz.startTime + "+05:30").getTime() : 0;
+      const endTime = quiz.endTime ? new Date(quiz.endTime + "+05:30").getTime() : Infinity;
       
       if (now < startTime) throw new Error("This quiz has not started yet.");
       if (now > endTime) throw new Error("This quiz has already ended.");
@@ -89,8 +89,8 @@ export async function joinSession(formData: FormData) {
       }
       if (quiz.scheduleMode === 'AUTO') {
         const now = new Date().getTime();
-        const startTime = quiz.startTime ? new Date(quiz.startTime).getTime() : 0;
-        const endTime = quiz.endTime ? new Date(quiz.endTime).getTime() : Infinity;
+        const startTime = quiz.startTime ? new Date(quiz.startTime + "+05:30").getTime() : 0;
+        const endTime = quiz.endTime ? new Date(quiz.endTime + "+05:30").getTime() : Infinity;
         
         if (now < startTime) throw new Error("This quiz has not started yet.");
         if (now > endTime) throw new Error("This quiz has already ended.");

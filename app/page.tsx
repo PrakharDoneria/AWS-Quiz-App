@@ -111,8 +111,8 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ e
           </form>
         </div>
 
-        {/* BOTTOM WIDE CARD: View Leaderboard */}
-        <div className="bg-[#10141a] border-4 border-[#324054] shadow-[12px_12px_0px_0px_rgba(0,0,0,0.8)] rounded-xl overflow-hidden flex-1 p-8 md:p-10 flex flex-col md:col-span-2">
+        {/* BOTTOM LEFT CARD: View Leaderboard */}
+        <div className="bg-[#10141a] border-4 border-[#324054] shadow-[12px_12px_0px_0px_rgba(0,0,0,0.8)] rounded-xl overflow-hidden flex-1 p-8 md:p-10 flex flex-col">
           <div className="flex flex-col items-start text-left gap-4 mb-8">
             <div className="bg-yellow-500/20 p-4 rounded-md border-2 border-yellow-500 shadow-[4px_4px_0px_0px_#eab308]">
               <img src="/icons/AWS Student Builder Group_RGB_Icons_Clock_Purple.svg" alt="Leaderboard Icon" className="w-8 h-8" />
@@ -140,6 +140,25 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ e
               View Stats <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="square" strokeLinejoin="miter"><path d="M21.21 15.89A10 10 0 1 1 8 2.83" /><path d="M22 12A10 10 0 0 0 12 2v10z" /></svg>
             </button>
           </form>
+        </div>
+
+        {/* BOTTOM RIGHT CARD: Get Certificate */}
+        <div className="bg-[#10141a] border-4 border-[#324054] shadow-[12px_12px_0px_0px_rgba(0,0,0,0.8)] rounded-xl overflow-hidden flex-1 p-8 md:p-10 flex flex-col">
+          <div className="flex flex-col items-start text-left gap-4 mb-8">
+            <div className="bg-green-500/20 p-4 rounded-md border-2 border-green-500 shadow-[4px_4px_0px_0px_#22c55e]">
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-8 h-8 text-green-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 15V3m0 12l-4-4m4 4l4-4M2 17l.621 2.485A2 2 0 0 0 4.561 21h14.878a2 2 0 0 0 1.94-1.515L22 17"></path></svg>
+            </div>
+            <div>
+              <h2 className="text-3xl font-black text-white mb-2 tracking-tight shadow-none">My Certificate</h2>
+              <p className="text-gray-400">Get your completion certificate.</p>
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-6 w-full mt-auto">
+            <a href="/certificate" className="mt-4 bg-green-500 text-black font-black text-xl uppercase tracking-wider py-4 px-6 border-2 border-black shadow-[6px_6px_0px_0px_#000] hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[8px_8px_0px_0px_#000] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[2px_2px_0px_0px_#000] transition-all w-full flex justify-center items-center gap-2 text-center">
+              Get Certificate
+            </a>
+          </div>
         </div>
 
       </div>
