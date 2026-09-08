@@ -1,9 +1,13 @@
 import { joinSession, playQuizAction, viewLeaderboardAction } from "./actions";
 import { getAllQuizzes } from "@/lib/quiz/db";
+import CertificateCard from "./CertificateCard";
+import FollowInstagramSheet from "./FollowInstagramSheet";
 
-export default async function Home({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
+export default async function Home({ searchParams }: { searchParams: Promise<{ error?: string, quizCode?: string, joinCode?: string }> }) {
   const params = await searchParams;
   const errorMsg = params.error;
+  const prefillQuizCode = params.quizCode || "";
+  const prefillJoinCode = params.joinCode || "";
 
   const quizzes = await getAllQuizzes();
 
@@ -33,8 +37,8 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ e
               <img src="/icons/AWS Student Builder Group_RGB_Icons_Wrench_Blue.svg" alt="Make Team Icon" className="w-8 h-8" />
             </div>
             <div>
-              <h2 className="text-3xl font-black text-white mb-2 tracking-tight shadow-none">Make New Team</h2>
-              <p className="text-gray-400">Start a new team session for a specific quiz.</p>
+              <h2 className="text-3xl font-black text-white mb-2 tracking-tight shadow-none">Start Quiz (Leader)</h2>
+              <p className="text-gray-400">Create a session for your team to play.</p>
             </div>
           </div>
 
@@ -46,6 +50,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ e
                 name="quizCode"
                 type="text"
                 placeholder="4-Digit Quiz Code"
+                defaultValue={prefillQuizCode}
                 className="w-full bg-[#0d1117] border-2 border-[#445167] p-4 text-white text-xl tracking-widest font-mono uppercase focus:border-primary focus:shadow-[4px_4px_0px_0px_var(--primary)] outline-none transition-all"
                 required
                 maxLength={4}
@@ -64,7 +69,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ e
               />
             </div>
             <button type="submit" className="mt-4 bg-primary text-white font-black text-xl uppercase tracking-wider py-4 px-6 border-2 border-black shadow-[6px_6px_0px_0px_#000] hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[8px_8px_0px_0px_#000] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[2px_2px_0px_0px_#000] transition-all w-full flex justify-center items-center gap-2">
-              Create Team <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="square" strokeLinejoin="miter"><line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" /></svg>
+              Start Quiz <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="square" strokeLinejoin="miter"><line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" /></svg>
             </button>
           </form>
         </div>
@@ -76,8 +81,8 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ e
               <img src="/icons/AWS Student Builder Group_RGB_Icons_Teams_Purple.svg" alt="Join Team Icon" className="w-8 h-8" />
             </div>
             <div>
-              <h2 className="text-3xl font-black text-white mb-2 tracking-tight shadow-none">Join Your Team</h2>
-              <p className="text-gray-400">Enter the invite code to join your teammate.</p>
+              <h2 className="text-3xl font-black text-white mb-2 tracking-tight shadow-none">Join Quiz (Teammate)</h2>
+              <p className="text-gray-400">Enter the invite code from your team leader.</p>
             </div>
           </div>
 
@@ -88,6 +93,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ e
                 name="joinCode"
                 type="text"
                 placeholder="4-Digit Code"
+                defaultValue={prefillJoinCode}
                 className="w-full bg-[#0d1117] border-2 border-[#445167] p-4 text-white text-xl tracking-widest font-mono uppercase focus:border-tertiary focus:shadow-[4px_4px_0px_0px_var(--tertiary)] outline-none transition-all"
                 required
                 maxLength={4}
@@ -106,7 +112,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ e
               />
             </div>
             <button type="submit" className="mt-4 bg-tertiary text-white font-black text-xl uppercase tracking-wider py-4 px-6 border-2 border-black shadow-[6px_6px_0px_0px_#000] hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[8px_8px_0px_0px_#000] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[2px_2px_0px_0px_#000] transition-all w-full flex justify-center items-center gap-2">
-              Join Session <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="square" strokeLinejoin="miter"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" /><polyline points="10 17 15 12 10 7" /><line x1="15" y1="12" x2="3" y2="12" /></svg>
+              Join Quiz <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="square" strokeLinejoin="miter"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" /><polyline points="10 17 15 12 10 7" /><line x1="15" y1="12" x2="3" y2="12" /></svg>
             </button>
           </form>
         </div>
@@ -142,26 +148,12 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ e
           </form>
         </div>
 
-        {/* BOTTOM RIGHT CARD: Get Certificate */}
-        <div className="bg-[#10141a] border-4 border-[#324054] shadow-[12px_12px_0px_0px_rgba(0,0,0,0.8)] rounded-xl overflow-hidden flex-1 p-8 md:p-10 flex flex-col">
-          <div className="flex flex-col items-start text-left gap-4 mb-8">
-            <div className="bg-green-500/20 p-4 rounded-md border-2 border-green-500 shadow-[4px_4px_0px_0px_#22c55e]">
-              <svg xmlns="http://www.w3.org/2000/svg" className="w-8 h-8 text-green-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 15V3m0 12l-4-4m4 4l4-4M2 17l.621 2.485A2 2 0 0 0 4.561 21h14.878a2 2 0 0 0 1.94-1.515L22 17"></path></svg>
-            </div>
-            <div>
-              <h2 className="text-3xl font-black text-white mb-2 tracking-tight shadow-none">My Certificate</h2>
-              <p className="text-gray-400">Get your completion certificate.</p>
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-6 w-full mt-auto">
-            <a href="/certificate" className="mt-4 bg-green-500 text-black font-black text-xl uppercase tracking-wider py-4 px-6 border-2 border-black shadow-[6px_6px_0px_0px_#000] hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[8px_8px_0px_0px_#000] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[2px_2px_0px_0px_#000] transition-all w-full flex justify-center items-center gap-2 text-center">
-              Get Certificate
-            </a>
-          </div>
-        </div>
+        {/* BOTTOM RIGHT CARD: Get Certificate (Client Component) */}
+        <CertificateCard />
 
       </div>
+
+      <FollowInstagramSheet />
     </main>
   );
 }

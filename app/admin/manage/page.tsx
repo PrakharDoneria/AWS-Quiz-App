@@ -54,7 +54,7 @@ export default async function AdminManage() {
                     </h3>
                     <p className="text-sm text-gray-400">{quiz.description}</p>
                   </div>
-                  <QuizActionButtons quizId={quiz.id} />
+                  <QuizActionButtons quizId={quiz.id} quizCode={quiz.quizCode} />
                 </div>
                 {/* Schedule & Status */}
                 <div className="w-full mt-2">

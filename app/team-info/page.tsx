@@ -32,7 +32,7 @@ export default function TeamInfoPage() {
         <h1 className="mb-0 text-5xl tracking-tight text-white shadow-none" style={{ textShadow: '4px 4px 0px var(--primary)' }}>Team Info</h1>
       </div>
       <p className="mb-8 text-lg text-gray-300 text-center">
-        Enter the Team Leader's registered Email Address to view team details.
+        Enter a registered Email Address or Roll Number to view team details.
       </p>
 
       {error && (
@@ -85,11 +85,11 @@ export default function TeamInfoPage() {
         <div className="w-full max-w-xl bg-[#10141a] border-4 border-[#324054] shadow-[12px_12px_0px_0px_rgba(0,0,0,0.8)] rounded-xl p-8 md:p-10 flex flex-col">
           <form action={handleSearch} className="flex flex-col gap-6 w-full text-left">
             <div>
-              <label className="block text-sm font-bold text-gray-400 uppercase tracking-wider mb-2">Leader's Email</label>
+              <label className="block text-sm font-bold text-gray-400 uppercase tracking-wider mb-2">Email Address or Roll Number</label>
               <input
-                name="email"
-                type="email"
-                placeholder="Enter leader's email address"
+                name="query"
+                type="text"
+                placeholder="Enter email or roll number..."
                 className="w-full bg-[#0d1117] border-2 border-[#445167] p-4 text-white text-xl focus:border-primary focus:shadow-[4px_4px_0px_0px_var(--primary)] outline-none transition-all"
                 required
               />

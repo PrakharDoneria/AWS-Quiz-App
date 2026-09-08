@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Trophy, Star, Loader2 } from "lucide-react";
 import Link from "next/link";
@@ -20,6 +20,7 @@ export default function ResultsClient({
   accuracies: Record<string, number>;
 }) {
   const router = useRouter();
+  const [feedbackClicked, setFeedbackClicked] = useState(false);
   const isSolo = session.mode === 'SOLO';
   const allCompleted = participants.every(p => p.status === 'COMPLETED');
   const me = participants.find(p => p.id === participantId);
@@ -92,9 +93,21 @@ export default function ResultsClient({
         </ul>
       </div>
 
-      <Link href="/" className="btn btn-secondary mt-4">
-        Back to Home
-      </Link>
+      <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mt-8">
+        {me?.status === 'COMPLETED' && !feedbackClicked && (
+          <a href="https://pulse.amazon/survey/UPCU4UQO" target="_blank" rel="noopener noreferrer" onClick={() => setFeedbackClicked(true)} className="bg-primary text-white font-black text-lg uppercase tracking-wider py-3 px-6 border-2 border-black shadow-[4px_4px_0px_0px_#000] hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[6px_6px_0px_0px_#000] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[2px_2px_0px_0px_#000] transition-all text-center">
+            Submit Feedback (Required)
+          </a>
+        )}
+        {me?.status === 'COMPLETED' && feedbackClicked && (
+          <Link href="/certificate" className="bg-green-500 text-black font-black text-lg uppercase tracking-wider py-3 px-6 border-2 border-black shadow-[4px_4px_0px_0px_#000] hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[6px_6px_0px_0px_#000] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[2px_2px_0px_0px_#000] transition-all text-center">
+            Get Certificate
+          </Link>
+        )}
+        <Link href="/" className="bg-[#1a202c] border-2 border-[#445167] text-gray-300 hover:text-white font-black text-lg uppercase tracking-wider py-3 px-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,0.5)] hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,0.5)] transition-all">
+          Back to Home
+        </Link>
+      </div>
     </div>
   );
 }

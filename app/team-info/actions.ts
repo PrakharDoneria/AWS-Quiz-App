@@ -25,8 +25,8 @@ export type TeamInfo = {
 
 export async function getTeamInfoAction(formData: FormData) {
   try {
-    const leaderEmail = formData.get("email")?.toString().trim().toLowerCase();
-    if (!leaderEmail) throw new Error("Leader email is required.");
+    const query = formData.get("query")?.toString().trim().toLowerCase();
+    if (!query) throw new Error("Search query (email or roll number) is required.");
 
     const csvRes = await fetch(CSV_URL, { cache: "no-store" });
     if (!csvRes.ok) throw new Error("Failed to fetch data.");
@@ -41,7 +41,11 @@ export async function getTeamInfoAction(formData: FormData) {
 
     for (const row of rows) {
       const email = row["Email Address"]?.toString().trim().toLowerCase();
-      if (email === leaderEmail) {
+      const teammateEmail = row["Teammate's Email Address"]?.toString().trim().toLowerCase();
+      const roll = row["Roll Number"]?.toString().trim().toLowerCase();
+      const teammateRoll = row["Teammate's Roll Number / Enrollment Number"]?.toString().trim().toLowerCase();
+      
+      if (email === query || teammateEmail === query || roll === query || teammateRoll === query) {
         // Found the team
         const hasTeammate = !!row["Teammate's Email Address"]?.toString().trim();
         
@@ -67,7 +71,7 @@ export async function getTeamInfoAction(formData: FormData) {
       }
     }
 
-    return { success: false, error: "Team not found. Make sure you entered the Team Leader's registered email." };
+    return { success: false, error: "Team not found. Make sure you entered a registered email or roll number." };
   } catch (error: any) {
     console.error(error);
     return { success: false, error: error.message || "An error occurred." };
