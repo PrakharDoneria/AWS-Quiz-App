@@ -1,6 +1,5 @@
 "use server";
 
-import fs from "fs";
 import path from "path";
 import Papa from "papaparse";
 import sharp from "sharp";
@@ -17,40 +16,23 @@ const NAME_BOX = {
   height: 263,  // 1664 - 1401
 };
 
-// Cache the font as base64 once at module level (avoids re-reading per request)
-let _fontB64: string | null = null;
-function getFontB64(): string {
-  if (_fontB64) return _fontB64;
-  const fontPath = path.join(process.cwd(), "public", "fonts", "CourierNew-Bold.ttf");
-  _fontB64 = fs.readFileSync(fontPath).toString("base64");
-  return _fontB64;
-}
-
 /** Build an SVG snippet that centers the student name inside the bounding box */
 function makeNameSvg(name: string): Buffer {
   // Auto-scale font size so even long names fit within the box width
-  // Each char in Courier New Bold is ~0.6× the font size wide
   const maxFontSize = 90;
   const fitFontSize = Math.floor((NAME_BOX.width * 0.92) / (name.length * 0.58));
   const fontSize = Math.min(maxFontSize, Math.max(40, fitFontSize));
 
-  // Embed the font as a base64 data URI so the SVG is self-contained.
-  // This is critical for AWS Lambda/Amplify where no system fonts exist.
-  const fontB64 = getFontB64();
-  const fontFace = `@font-face {
-    font-family: 'CourierBold';
-    src: url('data:font/truetype;base64,${fontB64}') format('truetype');
-    font-weight: bold;
-  }`;
-
   const safeName = name.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
+  // No font-family specified — librsvg on AWS Lambda will use its built-in
+  // default (DejaVu Sans / Liberation), which is always available on Amazon Linux.
+  // Specifying system fonts like "Courier New" causes □□□ boxes on Lambda
+  // because those fonts don't exist in the container.
   const svg = `<svg width="${NAME_BOX.width}" height="${NAME_BOX.height}" xmlns="http://www.w3.org/2000/svg">
-  <defs><style>${fontFace}</style></defs>
   <text
     x="${NAME_BOX.width / 2}"
     y="${NAME_BOX.height / 2}"
-    font-family="CourierBold, 'Courier New', Courier, monospace"
     font-size="${fontSize}"
     font-weight="bold"
     fill="#1a1a2e"
